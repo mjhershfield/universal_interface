@@ -1,22 +1,6 @@
 # Planning Document
 
-## OVERARCHING QUESTIONS (for first meeting)
-- Team name
-- Meeting time and frequency
-- Which HDLs to use for design and verification?
-- Who is in charge of what? (initially)
-- Come up with goal for end of semester
-- Come up with first deliverables from each team member (1-2 weeks of work)
-
-
-### Ideas for first deliverables
-- Peripherals: Implement and start testing UART
-- Architecture: Create scaffolding for project HDL (common includes, I/O pins, initial interfaces for peripheral blocks, USB interface, top level)
-- Interfacing: research bus arbitration techniques to decide whether to read/write from host, and which peripheral gets to send data back to the host at a given time.
-- Software: Research how to use the D3XX driver set and research if it is possible to present our device as multiple virtual devices (like if we can present 3 UART peripherals as 3 serial interfaces so normal software can use them too). Is cross platform software (windows/linux) viable?
-- Verification: Start learning SystemVerilog testbenching? Idk what we have to do for verification, maybe make models of how the system should work or ways to emulate DUT peripherals or the USB host sending/receiving data through the FIFO
-
-if you were doing research, maybe add the best sites/papers to the references. pls give it at least a little time <3
+All HDL and testbenching will be done in SystemVerilog. We will meet 
 
 ## Timeline
 - I need a gantt chart I swear
@@ -69,6 +53,7 @@ For protocols with bidirectional wires, I allocated them 1 input and 1 output fo
     - Need to choose one
         - Put commands in the TX data FIFO, have the peripheral parse them and manage them
         - have an external input (RAM-style)
+    - Probably want at minimum a self-clearing reset as a configuration register.
 - General control signals
     - Idle output (safe to reconfigure)
     - Reset input (active high)
