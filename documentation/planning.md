@@ -1,3 +1,4 @@
+
 # Planning Document
 
 All HDL and testbenching will be done in SystemVerilog. We will meet 
@@ -129,13 +130,22 @@ This protocol was pulled out of my ass to allow interleaving packets from differ
 
 ### Idea 1: optimized interleaving
 
-#### General packet:
+#### Data From Host To Lycan Packet:
 |Name|Bit field|Notes|
 |-|-|-|
 |Peripheral Address|31-29|Ranges from 0-7|
 |Configuration Flag|28|0 = data for tx/rx|
 |Number of valid bytes|27-26|1-3 bytes in data field of this packet|
-|Data for peripheral|25-0|Peripheral dependent format?|
+|Don't Cares|25-24|Currently unused|
+|Data for peripheral|23-0|Up to 3 bytes of data|
+
+#### Data From Lycan To Host Packet:
+|Name|Bit field|Notes|
+|-|-|-|
+|Peripheral Address|31-29|Ranges from 0-7|
+|Number of valid bytes|28-27|1-3 bytes in data field of this packet|
+|Don't Cares|26-24|Currently unused|
+|Data for peripheral|23-0|Up to 3 bytes of data|
 
 #### Configuration Packet:
 |Name|Bit field|Notes|
