@@ -16,3 +16,6 @@
 - Matthew H: proofread and edit Design Plan Draft, create statement of work (1 hr)
 - Matthew S: finish statement of work milestones, final proofreading (30 minutes)
 - Matthew H: Start learning SystemVerilog, begin scaffolding the HDL structure. (2 hr)
+
+## 10/15/24
+- All: Meet up to define requirements for pre-alpha build (1 hr)
