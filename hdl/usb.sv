@@ -1,0 +1,4 @@
+module usb
+    ();
+
+endmodule

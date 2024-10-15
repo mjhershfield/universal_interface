@@ -1,10 +1,18 @@
 # Contribution Log
 
 ## 09/26/24
-- Matthew H: Create Github repository and initial design planning
+- Matthew H: Create Github repository and initial design planning (2 hr)
 
 ## 10/1/24
-- All: Meet up to decide on meeting times, initial deliverables.
+- All: Meet up to decide on meeting times, initial deliverables. (1 hr)
 
 ## 10/6/24
 - Matthew S: Start Design Plan Draft - 1 hour
+
+## 10/8/24
+- All: Meet up to work on Design Plan Draft and iron out details on USB protocol & bus arbitration (2 hr)
+
+## 10/9/24
+- Matthew H: proofread and edit Design Plan Draft, create statement of work (1 hr)
+- Matthew S: finish statement of work milestones, final proofreading (30 minutes)
+- Matthew H: Start learning SystemVerilog, begin scaffolding the HDL structure. (2 hr)
