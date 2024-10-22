@@ -19,3 +19,7 @@
 
 ## 10/15/24
 - All: Meet up to define requirements for pre-alpha build (1 hr)
+
+## 10/21/24
+- Matthew S: Research ftd3xx python source code (2 hours)
+- Matthew S: Create initial python script for reading and writing data to USB FIFO (3 hrs)
