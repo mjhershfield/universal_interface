@@ -42,18 +42,15 @@ For protocols with bidirectional wires, I allocated them 1 input and 1 output fo
 - 4 outputs to the DUT
     - each output consists of two signals: a high/low output signal and a signal controlling whether the output is tristated. this will enable safe bidirectional and open-drain I/O
 - TX data FIFO control signals
-    - x bit input (same as USB FIFO minus packet decoding logic)
+    - x bit input (same as USB FIFO minus peripheral address)
     - FIFO empty input
-    - Flush FIFO output
+    - Read TX data output
 - RX data FIFO control signals
-    - x bit output (same as USB FIFO minus packet decoding logic)
+    - x bit output (same as USB FIFO minus peripheral address)
     - data valid output
     - FIFO full input
-    - Flush FIFO output
 - Configuration registers
-    - Need to choose one
-        - Put commands in the TX data FIFO, have the peripheral parse them and manage them
-        - have an external input (RAM-style)
+    - Configuration commands just get passed into the peripheral through the TX FIFO (see protocol section)
     - Probably want at minimum a self-clearing reset as a configuration register.
 - General control signals
     - Idle output (safe to reconfigure)
@@ -71,7 +68,7 @@ Coming soon. based of the limitations of partial reconfig
 
 Need to make sure that everything will be able to route on a smaller FPGA still.
 
-Are the external I/O pins crossing clock domains? yes.
+Are the external I/O pins crossing clock domains? yes. Do we need multiple layers of registers on our GPIO inputs to account for possible metastability? Maybe we test it lol
 
 ## Peripheral Requirements
 
@@ -79,12 +76,11 @@ Are the external I/O pins crossing clock domains? yes.
 - Must run at 100 MHz
     - TX has a configurable clock divider to accommodate different baud rates
     - RX auto detects baud rate based on width of start bit?
-- Configurable number of start bits
+- Configurable number of stop bits
 - Parity generation and checking - none, odd, even, mark, space
 
 ### SPI
 - Must run at 100 MHz
-- its just a shift register how bad can it be?
 - can master/slave be a single peripheral or should it be 2?
 - Master must have a clock divider so we can generate other frequencies
 - Slave must handle clock domain crossing for sure?
@@ -106,48 +102,44 @@ See pages 7-10 of the IC datasheet
 - Reset(L) output
 - Wakeup(L) bidirectional? check datasheet
 - There are two configurable GPIO on the FIFO IC. what can they do?
+    - For wakeup and GPIO, let's just have those as FPGA inputs for now. Better safe than sorry.
 
 ### Bus Sharing/Arbitration
 
-This might be something we have to find papers on. In my head, a round-robin approach for each of the peripherals would be good and there are several approaches to do that. How can we prioritize reads/writes over each other? does it make sense to do that?
+Idea: round robin but priority given to FIFOs that are almost full.
 
-Idea: round robin but priority given to FIFOs that are almost full? Need to look for papers
+Implementation plan: barrel shifter approach for priority-driven round robin.
 
-Trying to find links for bus arbitration circuit approaches
-- TDM/counter approach (bad)
-- Barrel shifter round robin (probably fine)
-- unhinged double priority encoder round robin (citation needed)
+Each peripheral has a request signal to signal that they have data they want to transmit (FIFO empty). The arbiter controls which peripheral's data is sent back to the host computer using a grant signal (0-7)
 
 ## USB Protocol
 
-Each packet through the FIFO is 32 bits. The FIFO has four channels, so we can theoretically use them to differentiate between peripherals or functions like data vs configuration. I'm not sure what the overhead of switching channels is, however.
+Each packet through the FIFO is 32 bits. We will be using a single channel in the FIFO (FT232 mode), since this appears to be the simplest & most performant method to use the IC.
 
-Assumes <= 8 total peripherals (including default GPIO)
+We will have 8 total peripherals on Lycan at all times (including the default GPIO R/W)
 
-This protocol would be transmitted directly to the peripheral, minus the peripheral address field.
+This protocol would be transmitted directly to the peripheral, minus the peripheral address field. The peripheral address is handled by a wrapper around each peripheral to reduce boilerplate in the reconfigurable peripherals.
 
-This protocol was pulled out of my ass to allow interleaving packets from different peripherals easily. It may make more sense if we are using one peripheral repeatedly to instead have a header/content style
+This protocol was designed to allow interleaving packets from different peripherals easily. 
 
-### Idea 1: optimized interleaving
-
-#### Data From Host To Lycan Packet:
+### Data From Host To Lycan Packet:
 |Name|Bit field|Notes|
 |-|-|-|
 |Peripheral Address|31-29|Ranges from 0-7|
 |Configuration Flag|28|0 = data for tx/rx|
 |Number of valid bytes|27-26|1-3 bytes in data field of this packet|
-|Don't Cares|25-24|Currently unused|
+|Reserved|25-24|Currently unused|
 |Data for peripheral|23-0|Up to 3 bytes of data|
 
-#### Data From Lycan To Host Packet:
+### Data From Lycan To Host Packet:
 |Name|Bit field|Notes|
 |-|-|-|
 |Peripheral Address|31-29|Ranges from 0-7|
 |Number of valid bytes|28-27|1-3 bytes in data field of this packet|
-|Don't Cares|26-24|Currently unused|
+|Reserved|26-24|Currently unused|
 |Data for peripheral|23-0|Up to 3 bytes of data|
 
-#### Configuration Packet:
+### Configuration Packet from Host to Lycan:
 |Name|Bit field|Notes|
 |-|-|-|
 |Peripheral Address|31-29|Ranges from 0-7|
@@ -157,20 +149,6 @@ This protocol was pulled out of my ass to allow interleaving packets from differ
 |New value of register|23-0|ignored for reads. bottom bits of this field are used|
 
 Alternatively, multiple channels could be used instead of the configuration flag (eg. send config on channel 0, data on channel 1), freeing a bit from every packet. I don't know what time cost is associated with switching channels on the FPGA side.
-
-### Idea 2: optimized streaming
-
-START PACKET
-
-Data using up the full amount
-
-END PACKET
-
-This requires the bus arbiter to know which peripheral should control the stream instead of just sending packets everywhere
-
-What format should we use for start and end to distiguish them from the data packets while still making sure we aren't getting false positives from valid data? can we use channels for this?
-
-### Any other ideas?
 
 ## References & Documentation
 
@@ -186,6 +164,8 @@ What format should we use for start and end to distiguish them from the data pac
 - [Vivado Documentation for DFX](https://docs.amd.com/r/en-US/ug909-vivado-partial-reconfiguration/Introduction)
 - [Guided tutorial from 01signal](https://www.01signal.com/vendor-specific/xilinx/partial-reconfiguration/)
 
+### Vivado Tools & Tips
+- [Version Control and Vivado](https://adaptivesupport.amd.com/s/article/Revision-Control-with-a-Vivado-Project?language=en_US)
 
 ### FTDI FT601 USB to FIFO
 - [FT601 USB FIFO IC Device Info](https://ftdichip.com/products/ft601q-b/)
