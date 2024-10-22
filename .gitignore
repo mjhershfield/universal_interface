@@ -1,0 +1,4 @@
+# Keep only essential files for the Vivado project
+vivado/*
+!vivado/universal_interface.xpr
+!vivado/universal_interface.srcs

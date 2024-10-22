@@ -42,7 +42,7 @@ module top
 
     for (genvar i = 0; i < num_periph_inputs; i++) begin : peripheral_input_muxes
         mux #(.NUM_INPUTS(num_dut_pins)) periph_input_mux
-            (.in(dut_pins), .sel(peripheral_input_selects[i]), .out(peripheral_inputs[i]))
+            (.in(dut_pins), .sel(peripheral_input_selects[i]), .out(peripheral_inputs[i]));
     end
 
 endmodule

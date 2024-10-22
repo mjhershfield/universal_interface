@@ -23,3 +23,7 @@
 ## 10/21/24
 - Matthew S: Research ftd3xx python source code (2 hours)
 - Matthew S: Create initial python script for reading and writing data to USB FIFO (3 hrs)
+
+## 10/22/24
+- All: Meet to check on progress, define final goals for pre-alpha build, check on dev board arrivals. (30 minutes)
+- Matthew H: Update planning document, add Vivado project to version control (1 hour)
