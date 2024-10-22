@@ -1,0 +1,18 @@
+Metadata-Version: 2.1
+Name: ftd3xx
+Version: 1.0
+Summary: Python interface to ftd3xx.dll using ctypes
+Home-page: http://www.ftdichip.com/Products/ICs/FT600.html
+Author: Future Technology Devices International Ltd.
+Keywords: ftd3xx d3xx ft60x ft600 ft601
+Description-Content-Type: text/markdown
+
+# FTD3XX
+
+A Python wrapper around FTDI's D3xx DLL.
+
+This requires the [D3XX drivers](https://ftdichip.com/drivers/d3xx-drivers/) to be installed on the system.
+
+
+## Credits
+This code comes from FTDI's [examples page](https://ftdichip.com/software-examples/ft600-601-software-examples/).
