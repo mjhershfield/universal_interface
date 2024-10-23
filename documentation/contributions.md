@@ -27,3 +27,4 @@
 ## 10/22/24
 - All: Meet to check on progress, define final goals for pre-alpha build, check on dev board arrivals. (30 minutes)
 - Matthew H: Update planning document, add Vivado project to version control (1 hour)
+- Matthew S: Test out python ftd3xx module with FTDI FIFO board, identification/connection (1 hour)
