@@ -13,11 +13,9 @@ module ft601_controller
         output logic usb_outen_l,
         output logic usb_rst_l,
 
-        // 0 = input from data bus, 1 = outputting to data bus
-        output logic ft601_data_bus_dir,
         // Whether valid data is coming from the arbiter
         input logic periph_data_available,
-        // Allow peripherals to send data back to USB host
+        // Whether we are currently reading data from the arbiter
         output logic read_periph_data
     );
 
