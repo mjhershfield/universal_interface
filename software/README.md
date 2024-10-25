@@ -38,6 +38,11 @@ cd <path to Github Repo>/software/
 python3 -m pip install -r requirements.txt
 ```
 
+> [!NOTE]
+> Make sure to run any python scripts for Lycan from within the virtual environment.
+> In VSCode, this can be done by ensuring that you use the Python interpreter found within the virtual environment directory.
+> In the terminal, make sure you activate the venv before running Python
+
 ## When done using the VENV...
 ```
 deactivate
