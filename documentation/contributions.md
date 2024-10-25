@@ -32,6 +32,7 @@
 - All: Meet to check on progress, define final goals for pre-alpha build, check on dev board arrivals. (30 minutes)
 - Matthew H: Update planning document, add Vivado project to version control (1 hour)
 - Matthew S: Test out python ftd3xx module with FTDI FIFO board, identification/connection (1 hour)
+
 ## 10/23/24
 -Adam B: Read through a lot of Stitt's system verilog tutorial and practiced simulating - 2 hour
 
@@ -39,3 +40,4 @@
 - All: Meet to work on Pre-Alpha build, further develop hardware architecture and write source code (2 hours)
 - Matthew S: Work on the usage of pipes within the FIFO board, and how to properly read/write from them using Python (1 hour)
 - Adam B: Worked on programming the arbiter - 3 hours
+- Matthews, Adam: Continued work on writing Pre-Alpha Build Document (2 hours)
