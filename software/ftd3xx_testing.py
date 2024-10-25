@@ -65,7 +65,6 @@ def write_config_reg(device, pipe=0x82, peripheral_addr=0, reg_addr=0, reg_val=0
     # Transmit the packet
     device.writePipe(pipe, packet, 4)
     # Read the result
-    
 
 def read_config_reg(device, pipe=0x02, peripheral_addr=0, reg_addr=0):
     # Check that register address is 3 bits
