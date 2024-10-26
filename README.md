@@ -25,13 +25,16 @@ Design Revision - Week 8
 Pre-Alpha Build - Week 10-11
 - Able to communicate with FTDI chip (reading info and configuration, but not FIFO data)
 - Simple FT3DXX Python script with virtual environment set up
-- Initial Verilog code for the major components of the hardware system
+- Initial System Verilog code for the major components of the hardware system (bus arbiter, FT601 controller, loopback peripheral)
+
+## Current Bugs
+At the moment, we are unable to physically test our design since our dev board has not arrived yet. We have preliminary testbenches for some components, but we have not been able to test our entire system to check for bugs yet. Out-of-spec behavior is corrected as soon as it is exposed in testing.
 
 
 ## Design Plan Information - Hardware
 
 ### Dev Boards
-- Using the Xilinx Spartan dev board for the FPGA development
+- Using the Nexys Video dev board for FPGA development
 - Using the UFT601X-B FTDI FIFO dev board for the USB protocol development and FIFO link to FPGA
 
 
@@ -62,11 +65,11 @@ For protocols with bidirectional wires, I allocated them 1 input and 1 output fo
 - 4 outputs to the DUT
     - each output consists of two signals: a high/low output signal and a signal controlling whether the output is tristated. this will enable safe bidirectional and open-drain I/O
 - TX data FIFO control signals
-    - x bit input (same as USB FIFO minus peripheral address)
+    - 29 bit input (same as USB FIFO minus peripheral address)
     - FIFO empty input
     - Read TX data output
 - RX data FIFO control signals
-    - x bit output (same as USB FIFO minus peripheral address)
+    - 29 bit output (same as USB FIFO minus peripheral address)
     - data valid output
     - FIFO full input
 - Configuration registers
@@ -85,9 +88,9 @@ For protocols with bidirectional wires, I allocated them 1 input and 1 output fo
 
 ### Constraints
 
-Coming soon. based of the limitations of partial reconfig
+Coming soon. based off the limitations of partial reconfig
 
-Need to make sure that everything will be able to route on a smaller FPGA still.
+Need to make sure that everything will still be able to route on a smaller FPGA.
 
 Are the external I/O pins crossing clock domains? yes. Do we need multiple layers of registers on our GPIO inputs to account for possible metastability? Maybe we test it lol
 
@@ -177,7 +180,7 @@ This protocol was designed to allow interleaving packets from different peripher
 |Data for peripheral|23-0|Up to 3 bytes of data|
 
 
-### References & Documentation
+## References & Documentation
 
 ### General Digital Design
 - [Stitt's VHDL lessons](https://github.com/ARC-Lab-UF/vhdl-tutorial)
