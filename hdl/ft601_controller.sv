@@ -34,6 +34,10 @@ module ft601_controller
         // input logic periph_data_available,
         // // Allow peripherals to send data back to USB host
         // output logic read_periph_data
+        // Whether valid data is coming from the arbiter
+        input logic periph_data_available,
+        // Whether we are currently reading data from the arbiter
+        output logic read_periph_data
     );
 
     typedef enum logic[1:0] {
