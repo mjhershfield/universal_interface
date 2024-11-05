@@ -23,7 +23,7 @@ module ft601_controller
 
         //ftdi data bus
         inout logic [31:0] data,
-        inout logic [3:0] be //what bytes of data are valid
+        inout logic [3:0] be, //what bytes of data are valid
         //output logic be_ts,
         //output logic data_ts,
 
