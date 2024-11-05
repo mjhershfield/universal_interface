@@ -46,3 +46,12 @@
 - Gilon K: Further dug into FT601 spec (1 hr)
 - Gilon K: Designed FSM for FT601 (1.5 hr)
 - Gilon K: Wrote FSM for FT601 controller in SV (2 Hr)
+
+## 10/29/24
+- All: Meet to discuss the week's goals (1 hr)
+
+## 10/31/24
+- Matthew S: Work on writing to the FIFO (without being connected to the FPGA) (2 hrs)
+
+## 11/4/24
+- Matthew S: Contact FTDI about FIFO communication issues, and research/try-out Python GUI options (2 hrs)
