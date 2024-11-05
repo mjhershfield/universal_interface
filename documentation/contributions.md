@@ -20,6 +20,7 @@
 - Matthew H: proofread and edit Design Plan Draft, create statement of work (1 hr)
 - Matthew S: finish statement of work milestones, final proofreading (30 minutes)
 - Matthew H: Start learning SystemVerilog, begin scaffolding the HDL structure. (2 hr)
+- Gilon K: Began learning SV (2 hr)
 
 ## 10/15/24
 - All: Meet up to define requirements for pre-alpha build (1 hr)
@@ -27,6 +28,7 @@
 ## 10/21/24
 - Matthew S: Research ftd3xx python source code (2 hours)
 - Matthew S: Create initial python script for reading and writing data to USB FIFO (3 hrs)
+- Gilon K: Dug into spec of FT601 Device (2 Hr)
 
 ## 10/22/24
 - All: Meet to check on progress, define final goals for pre-alpha build, check on dev board arrivals. (30 minutes)
@@ -41,3 +43,15 @@
 - Matthew S: Work on the usage of pipes within the FIFO board, and how to properly read/write from them using Python (1 hour)
 - Adam B: Worked on programming the arbiter - 3 hours
 - Matthews, Adam: Continued work on writing Pre-Alpha Build Document (2 hours)
+- Gilon K: Further dug into FT601 spec (1 hr)
+- Gilon K: Designed FSM for FT601 (1.5 hr)
+- Gilon K: Wrote FSM for FT601 controller in SV (2 Hr)
+
+## 10/29/24
+- All: Meet to discuss the week's goals (1 hr)
+
+## 10/31/24
+- Matthew S: Work on writing to the FIFO (without being connected to the FPGA) (2 hrs)
+
+## 11/4/24
+- Matthew S: Contact FTDI about FIFO communication issues, and research/try-out Python GUI options (2 hrs)
