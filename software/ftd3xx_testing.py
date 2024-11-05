@@ -1,5 +1,6 @@
 import ftd3xx
 from ftd3xx.defines import *
+import time
 
 def send_data(device, pipe=0x82, peripheral_addr=0, data=b'ABC'):
     # For every 3 bytes of data, send a packet
@@ -114,38 +115,39 @@ print("\tbConfigurationValue = %#02X" % CFGDESC.bConfigurationValue)
 print("\tiConfiguration = %#02X" % CFGDESC.iConfiguration)
 
 # Get pipe info
-print(dev.getPipeInformation(1, 0).PipeType)
-print(dev.getPipeInformation(1, 0).PipeId)
-print(dev.getPipeInformation(1, 0).MaximumPacketSize)
-print(dev.getPipeInformation(1, 0).Interval)
-print('')
-print(dev.getPipeInformation(1, 1).PipeType)
-print(dev.getPipeInformation(1, 1).PipeId)
-print(dev.getPipeInformation(1, 1).MaximumPacketSize)
-print(dev.getPipeInformation(1, 1).Interval)
+# print(dev.getPipeInformation(1, 0).PipeType)
+# print(dev.getPipeInformation(1, 0).PipeId)
+# print(dev.getPipeInformation(1, 0).MaximumPacketSize)
+# print(dev.getPipeInformation(1, 0).Interval)
+# print('')
+# print(dev.getPipeInformation(1, 1).PipeType)
+# print(dev.getPipeInformation(1, 1).PipeId)
+# print(dev.getPipeInformation(1, 1).MaximumPacketSize)
+# print(dev.getPipeInformation(1, 1).Interval)
 
-# for i in range(CFGDESC.bNumInterfaces):
-#     IFDESC = dev.getInterfaceDescriptor(i)
-#     print("\tInterface Descriptor [%d]" % i)
-#     print("\t\tbLength = %d" % IFDESC.bLength)
-#     print("\t\tbDescriptorType = %d" % IFDESC.bDescriptorType)
-#     print("\t\tbInterfaceNumber = %#02X" % IFDESC.bInterfaceNumber)
-#     print("\t\tbAlternateSetting = %#02X" % IFDESC.bAlternateSetting)
-#     print("\t\tbNumEndpoints = %#02X" % IFDESC.bNumEndpoints)
-#     print("\t\tbInterfaceClass = %#02X" % IFDESC.bInterfaceClass)
-#     print("\t\tbInterfaceSubClass = %#02X" % IFDESC.bInterfaceSubClass)
-#     print("\t\tbInterfaceProtocol = %#02X" % IFDESC.bInterfaceProtocol)
-#     print("\t\tiInterface = %#02X" % IFDESC.iInterface)
-#     print("")
-#     for j in range(IFDESC.bNumEndpoints):
-#             PIPEIF = dev.getPipeInformation(i, j)
-#             print("\t\tPipe Information [%d]" % j)
-#             print("\t\t\tPipeType = %d" % PIPEIF.PipeType)
-#             print("\t\t\tPipeId = %#02X" % PIPEIF.PipeId)
-#             print("\t\t\tMaximumPacketSize = %#02X" % PIPEIF.MaximumPacketSize)
-#             print("\t\t\tInterval = %#02X" % PIPEIF.Interval)
-#             print("")
+for i in range(CFGDESC.bNumInterfaces):
+    IFDESC = dev.getInterfaceDescriptor(i)
+    print("\tInterface Descriptor [%d]" % i)
+    print("\t\tbLength = %d" % IFDESC.bLength)
+    print("\t\tbDescriptorType = %d" % IFDESC.bDescriptorType)
+    print("\t\tbInterfaceNumber = %#02X" % IFDESC.bInterfaceNumber)
+    print("\t\tbAlternateSetting = %#02X" % IFDESC.bAlternateSetting)
+    print("\t\tbNumEndpoints = %#02X" % IFDESC.bNumEndpoints)
+    print("\t\tbInterfaceClass = %#02X" % IFDESC.bInterfaceClass)
+    print("\t\tbInterfaceSubClass = %#02X" % IFDESC.bInterfaceSubClass)
+    print("\t\tbInterfaceProtocol = %#02X" % IFDESC.bInterfaceProtocol)
+    print("\t\tiInterface = %#02X" % IFDESC.iInterface)
+    print("")
+    for j in range(IFDESC.bNumEndpoints):
+            PIPEIF = dev.getPipeInformation(i, j)
+            print("\t\tPipe Information [%d]" % j)
+            print("\t\t\tPipeType = %d" % PIPEIF.PipeType)
+            print("\t\t\tPipeId = %#02X" % PIPEIF.PipeId)
+            print("\t\t\tMaximumPacketSize = %#02X" % PIPEIF.MaximumPacketSize)
+            print("\t\t\tInterval = %#02X" % PIPEIF.Interval)
+            print("")
 
 # Try to send data to the FIFO
-numBytesWritten = dev.writePipe(0x82, b'ABCD', 4)
-print(numBytesWritten)
+numBytesWritten = 0
+numBytesWritten += dev.writePipe(0x02, b'ABCD', 4)
+print(f'Total number of bytes written: {numBytesWritten}')
