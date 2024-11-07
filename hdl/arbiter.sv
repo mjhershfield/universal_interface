@@ -25,7 +25,7 @@ module arbiter
         if (rx_fifo_almost_full > 0)
             assign rx_request = rx_fifo_almost_full;
         else
-            rx_request = ~rx_fifo_empty;
+            assign rx_request = ~rx_fifo_empty;
     end
 
     always_ff @(posedge clk) begin
