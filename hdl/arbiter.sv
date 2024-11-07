@@ -1,4 +1,5 @@
-module arbiter(
+module arbiter
+    (
         // Control signals from local peripheral FIFOs
         input logic [7:0] rx_fifo_empty, //same as fifo not empty
         input logic [7:0] rx_fifo_almost_full,
@@ -13,7 +14,7 @@ module arbiter(
         // Number of peripheral that has control of the bus, goes to demux
         output logic [2:0] grant
         // Whether data is currently being sent to the FT601.
-    );
+        );
 
     logic [2:0] curr_grant = 3'b000;
     logic [7:0] barrel_sh_out;
@@ -25,7 +26,9 @@ module arbiter(
     always_comb begin
         if (rx_fifo_almost_full > 0)
             assign rx_request = rx_fifo_almost_full;
-    end 
+        else
+            rx_request = ~rx_fifo_empty;
+    end
 
     always_ff @(posedge clk) begin
         if (rst)
@@ -33,7 +36,7 @@ module arbiter(
         else
             if (read_periph_data)
                 curr_grant <= next_grant;
-            else    
+            else
                 curr_grant <= curr_grant;
     end
 
@@ -42,5 +45,5 @@ module arbiter(
     priority_encoder PRI_EN_1 (.data(barrel_sh_out), .y(next_grant));
 
     assign grant = next_grant;
-    
+
 endmodule
