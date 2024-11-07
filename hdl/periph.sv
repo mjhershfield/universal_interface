@@ -1,4 +1,5 @@
 // Static peripheral block - contains the reconfigurable logic and the FIFOs/etc.
+import lycan::*;
 
 module periph
     #(
@@ -27,8 +28,67 @@ module periph
 
     );
 
+    logic tx_fifo_din, tx_fifo_wren, tx_fifo_rden, tx_fifo_dout, tx_fifo_full, tx_fifo_empty, tx_fifo_wr_rst_busy, tx_fifo_rd_rst_busy;
+    logic rx_fifo_din, rx_fifo_wren, rx_fifo_rden, rx_fifo_dout, rx_fifo_full, rx_fifo_empty, rx_fifo_almost_full, rx_fifo_wr_rst_busy, rx_fifo_rd_rst_busy;
+
+    // Connect to FIFOs (top bits of FIFOs are constant address)
+    // Instantiate TX FIFO
+    periph_local_tx_fifo (
+        .clk(clk), 
+        .rst(rst), 
+        .din(tx_fifo_din), 
+        .wr_en(tx_fifo_wren), 
+        .rd_en(tx_fifo_rden), 
+        .dout(tx_fifo_dout), 
+        .full(tx_fifo_full), 
+        .empty(tx_fifo_empty),  
+        .wr_rst_busy(tx_fifo_wr_rst_busy), 
+        .rd_rst_busy(tx_fifo_rd_rst_busy)
+    );
+
+    // Instantiate RX FIFO
+    periph_local_rx_fifo (
+        .clk(clk), 
+        .rst(rst), 
+        .din(rx_fifo_din), 
+        .wr_en(rx_fifo_wren), 
+        .rd_en(rx_fifo_rden), 
+        .dout(rx_fifo_dout), 
+        .full(rx_fifo_full), 
+        .empty(rx_fifo_empty),  
+        .prog_full(rx_fifo_almost_full), 
+        .wr_rst_busy(rx_fifo_wr_rst_busy), 
+        .rd_rst_busy(rx_fifo_rd_rst_busy)
+    );
 
     // Instantiate reconfig_periph_wrapper
-    // Connect to FIFOs (top bits of FIFOs are constant address)
+    // TODO: need to account for FIFO read latency of 1 cycle
+    // TODO: change FIFO widths to 29 bits? (stripping address)
+    reconfig_periph_wrapper (
+        .clk(clk),
+        .rst(rst),
+        .in(in),
+        .out(out),
+        .tristate(tristate),
+        .tx_data(tx_fifo_dout[usb_packet_width-periph_address_width-1:0]),
+        .tx_empty(tx_fifo_empty),
+        .tx_read(tx_fifo_rden),
+        .rx_data(rx_fifo_din[usb_packet_width-periph_address_width-1:0]),
+        .rx_valid(rx_fifo_wren),
+        .rx_fifo_full(rx_fifo_full),
+        .idle(idle)
+    );
+
+    // Connect FIFOs to top-level signals
+    assign tx_fifo_din = tx_data;
+    assign tx_fifo_wren = tx_valid;
+    assign tx_full = tx_fifo_full;
+
+    assign rx_data = {ADDRESS, rx_fifo_dout[usb_packet_width-periph_address_width-1:0]};
+    assign rx_fifo_rden = rx_read;
+    assign rx_empty = rx_fifo_empty;
+    assign rx_almost_full = rx_fifo_almost_full;
+    assign rx_full = rx_fifo_full;
+
     // This level strips out the address? or does the arbitrator handle it?
 endmodule
