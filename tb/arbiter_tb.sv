@@ -15,6 +15,9 @@ module arbiter_tb;
     //output
     logic [2:0] grant;
 
+    //for tb
+    int num_cycles;
+
     arbiter DUT (.*);
 
     // Generate a clock
@@ -37,14 +40,19 @@ module arbiter_tb;
         @(posedge clk);
 
         // Run the tests
-        for (int i=0; i < NUM_TESTS; i++) begin
+        for (int t=0; t < NUM_TESTS; t++) begin
             rx_fifo_empty <= $random;
-            rx_fifo_almost_full <= $random;
-            valid_in <= $random;
+            if (t < 3) begin
+                rx_fifo_almost_full <= 0;
+            end
+            else begin
+                rx_fifo_almost_full <= $random;
+            end
+            read_periph_data <= $random;
 
             //wait a random number of cycles to check round robin
-            localparam int NUM_CYCLES = $random;
-            for (int i=0; i < NUM_CYCLES; i++) @(posedge clk);
+            num_cycles = $urandom_range(1,12);
+            for (int j=0; j < num_cycles; j++) @(posedge clk);
         end
 
         $display("Tests completed.");
@@ -52,45 +60,67 @@ module arbiter_tb;
      end
 
     //compute grant and compare to what it should be
-    function automatic logic is_out_correct(logic [7:0] rx_fifo_empty, logic read_periph_data,
-                                            logic [7:0] rx_fifo_almost_full, logic [2:0] grant);
+    function automatic logic is_out_correct(logic [7:0] rx_fifo_not_empty, logic read_periph_data,
+                                            logic [7:0] rx_fifo_almost_full, logic [2:0] grant,
+                                            logic [2:0] prior);
 
         //check that the current grant is the next highest bit position equivalent value after last grant
         if (read_periph_data == 1) begin
             if (rx_fifo_almost_full > 1) begin
                 //rx_fifo_almost_full for full priority round robin
-                int curr_grant_position = grant;
-                int prev_grant_position = $past(grant, 1);
+
+
+                //FIX LOGIC TO GRANT MSB TO LSB
 
                 //base check
-                for (int i = prev_grant_position+1; i <= 7; i++) begin
+                for (int i = prior+1; i <= 7; i++) begin
                     if (rx_fifo_almost_full[i] == 1) begin
                         // i is now desired current grant
                         return grant == i;
                     end
                 end
                 //if it didnt return, we never found a 1, continue check from 0 bit
-                for (int i = 0; i < prev_grant_position; i++) begin
+                for (int i = 0; i < prior; i++) begin
                     if (rx_fifo_almost_full[i] == 1) begin
                         // i is now desired current grant
                         return grant == i;
                     end
                 end
                 //at this point keep grant at current
-                return grant == prev_grant_position;
+                return grant == prior;
             end
-
             else begin
                 //rx_fifo_empty for normal round robin
+                //rx_fifo_almost_full for full priority round robin
+
+                //base check
+                for (int i = prior+1; i <= 7; i++) begin
+                    if (rx_fifo_not_empty[i] == 1) begin
+                        // i is now desired current grant
+                        return grant == i;
+                    end
+                end
+                //if it didnt return, we never found a 1, continue check from 0 bit
+                for (int i = 0; i < prior; i++) begin
+                    if (rx_fifo_not_empty[i] == 1) begin
+                        // i is now desired current grant
+                        return grant == i;
+                    end
+                end
+                //at this point keep grant at current
+                return grant == prior;
             end
         //if we are not reading the grant should not change
         end
         else begin
-            assert property(@(posedge clk) grant == $past(grant, 1));
+            //assert property(@(posedge clk) grant == $past(grant, 1));
+            return grant == prior;
         end
 
-        return grant == check_grant;
     endfunction
+
+    assert property(@(posedge clk) is_out_correct(~rx_fifo_empty, read_periph_data,
+                                                    rx_fifo_almost_full, grant, $past(grant, 1)));
 
     //needs
     //if we are reading
