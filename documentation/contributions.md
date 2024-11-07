@@ -55,3 +55,9 @@
 
 ## 11/4/24
 - Matthew S: Contact FTDI about FIFO communication issues, and research/try-out Python GUI options (2 hrs)
+
+## 11/5/24
+- All: Meet to discuss the week's goals, any blocking issues, and open the FPGA board (1 hr)
+
+## 11/7/24
+- All: Meet to work on verification and integration of hardware components (___ hrs)
