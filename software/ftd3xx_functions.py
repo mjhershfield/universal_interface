@@ -33,8 +33,8 @@ def send_data_packet(device, pipe=0x82, peripheral_addr=0, data=b'ABC'):
     # Print result
     if(numBytesWritten > 0):
         print('Bytes transferred (written to FIFO): ', numBytesWritten)
-    else:
-        raise Exception('Error: No data was written to the FIFO')
+    # Return number of bytes written
+    return numBytesWritten
 
 def read_packet(device, pipe=0x02):
     packet = device.readPipeEx(pipe, 4)
@@ -44,7 +44,7 @@ def read_packet(device, pipe=0x02):
         print('Bytes read:', packet['bytesTransferred'])
         return is_config, packet
     else:
-        raise Exception('Error: No data was read from the FIFO')
+        return None
 
 def write_config_reg(device, pipe=0x82, peripheral_addr=0, reg_addr=0, reg_val=0):
     # Check that register address is 3 bits
@@ -84,69 +84,3 @@ def read_config_reg(device, pipe=0x02, peripheral_addr=0, reg_addr=0):
     result = device.readPipeEx(pipe, 4)
     # Parse the register value (bottom 3 bytes)
     reg_val = result[1:]
-
-# Create a list of device info and print the number of devices
-numDevices = ftd3xx.createDeviceInfoList()
-devices = ftd3xx.getDeviceInfoList()
-print('Number of devices: ', numDevices)
-
-# Pick the first device in the list (for now)
-if(devices != None):
-    # Create a ftd3xx device instance
-    dev = ftd3xx.create(devices[0].SerialNumber, FT_OPEN_BY_SERIAL_NUMBER)
-    devInfo = dev.getDeviceInfo()
-    # Print some info about the device
-    print('Device Info:')
-    print(f'Type: {devInfo["Type"]}')
-    print(f'ID: {devInfo["ID"]}')
-    print(f'Descr.: {devInfo["Description"]}')
-    print(f'Serial Num: {devInfo["Serial"]}')
-else:
-    raise Exception('Error: No devices detected. Exiting...')
-
-CFGDESC = dev.getConfigurationDescriptor()
-print("Configuration Descriptor")
-print("\tbLength = %d" % CFGDESC.bLength)
-print("\tbDescriptorType = %d" % CFGDESC.bDescriptorType)
-print("\twTotalLength = %#04X (%d)" % (CFGDESC.wTotalLength, CFGDESC.wTotalLength))
-print("\tbNumInterfaces = %#02X" % CFGDESC.bNumInterfaces)
-print("\tbConfigurationValue = %#02X" % CFGDESC.bConfigurationValue)
-print("\tiConfiguration = %#02X" % CFGDESC.iConfiguration)
-
-# Get pipe info
-# print(dev.getPipeInformation(1, 0).PipeType)
-# print(dev.getPipeInformation(1, 0).PipeId)
-# print(dev.getPipeInformation(1, 0).MaximumPacketSize)
-# print(dev.getPipeInformation(1, 0).Interval)
-# print('')
-# print(dev.getPipeInformation(1, 1).PipeType)
-# print(dev.getPipeInformation(1, 1).PipeId)
-# print(dev.getPipeInformation(1, 1).MaximumPacketSize)
-# print(dev.getPipeInformation(1, 1).Interval)
-
-for i in range(CFGDESC.bNumInterfaces):
-    IFDESC = dev.getInterfaceDescriptor(i)
-    print("\tInterface Descriptor [%d]" % i)
-    print("\t\tbLength = %d" % IFDESC.bLength)
-    print("\t\tbDescriptorType = %d" % IFDESC.bDescriptorType)
-    print("\t\tbInterfaceNumber = %#02X" % IFDESC.bInterfaceNumber)
-    print("\t\tbAlternateSetting = %#02X" % IFDESC.bAlternateSetting)
-    print("\t\tbNumEndpoints = %#02X" % IFDESC.bNumEndpoints)
-    print("\t\tbInterfaceClass = %#02X" % IFDESC.bInterfaceClass)
-    print("\t\tbInterfaceSubClass = %#02X" % IFDESC.bInterfaceSubClass)
-    print("\t\tbInterfaceProtocol = %#02X" % IFDESC.bInterfaceProtocol)
-    print("\t\tiInterface = %#02X" % IFDESC.iInterface)
-    print("")
-    for j in range(IFDESC.bNumEndpoints):
-            PIPEIF = dev.getPipeInformation(i, j)
-            print("\t\tPipe Information [%d]" % j)
-            print("\t\t\tPipeType = %d" % PIPEIF.PipeType)
-            print("\t\t\tPipeId = %#02X" % PIPEIF.PipeId)
-            print("\t\t\tMaximumPacketSize = %#02X" % PIPEIF.MaximumPacketSize)
-            print("\t\t\tInterval = %#02X" % PIPEIF.Interval)
-            print("")
-
-# Try to send data to the FIFO
-numBytesWritten = 0
-numBytesWritten += dev.writePipe(0x02, b'ABCD', 4)
-print(f'Total number of bytes written: {numBytesWritten}')

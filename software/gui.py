@@ -1,5 +1,6 @@
 import sys
 from PyQt6.QtWidgets import QApplication, QLabel, QWidget
+import ftd3xx_functions
 
 # Constants
 WINDOW_WIDTH = 800
