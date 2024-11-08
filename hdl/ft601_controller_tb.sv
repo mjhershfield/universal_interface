@@ -72,8 +72,8 @@ module ft601_controller_tb;
                 rst <= 1'b1;
                 usb_txe <= 1'b1;
                 usb_rxf <= 1'b1;
-                data_i <= 8'hFF00FF00;
-                i_valid <= 4'b1111;
+                data_i = 32'hF0000001;
+                i_valid = 4'b1111;
 
 
 
@@ -85,6 +85,11 @@ module ft601_controller_tb;
                 @(posedge clk);
 
                 usb_txe <= 1'b0;
+
+                for (int i = 0; i < 5; i++) 
+                    @(posedge clk);
+
+                usb_rxf <= 1'b0;
 
                 for (int i = 0; i < 5; i++) 
                     @(posedge clk);
