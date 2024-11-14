@@ -60,4 +60,10 @@
 - All: Meet to discuss the week's goals, any blocking issues, and open the FPGA board (1 hr)
 
 ## 11/7/24
-- All: Meet to work on verification and integration of hardware components (___ hrs)
+- All: Meet to work on verification and integration of hardware components (2 hrs)
+
+## 11/12/24
+- All: Check-in with Carsten, start work to get Lycan working on the dev board (2 hrs)
+
+## 11/14/24
+- All: Continue work debugging Lycan on the FPGA (2 hrs)
