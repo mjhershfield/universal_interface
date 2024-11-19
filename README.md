@@ -1,5 +1,7 @@
 # Lycan Senior Design Project
 
+NOTE: If loopback doesn't work, make sure you have flashed the FPGA with a fresh bitstream and you pressed the CPU_RST button on the Nexys Video.
+
 ## Timeline (Projected)
 Design Revision - Week 8
 - Design Plan Draft

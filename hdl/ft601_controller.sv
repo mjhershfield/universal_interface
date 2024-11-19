@@ -36,6 +36,7 @@ module ft601_controller (
 
   typedef enum logic [1:0] {
     init,
+    init_read,
     read,
     write
   } state_t;
@@ -60,8 +61,13 @@ module ft601_controller (
 
     unique case (state_r)
       init: begin
-        if (!usb_rx_empty) next_state = read;
+        if (!usb_rx_empty) next_state = init_read;
         else if (!usb_tx_full && usb_rx_empty) next_state = write;
+      end
+
+      init_read: begin
+        next_state = read;
+        usb_outen_l = 1'b0;
       end
 
       read: begin
@@ -69,7 +75,7 @@ module ft601_controller (
         usb_rden_l = 1'b0;
 
         data_o = data;
-        o_valid = be;
+        o_valid = usb_rx_empty ? 4'b0 : be;
 
         if (usb_rx_empty && usb_tx_full) next_state = init;
         else if (usb_rx_empty && !usb_tx_full) next_state = write;
@@ -82,7 +88,7 @@ module ft601_controller (
         read_periph_data = periph_data_available;
 
         if (usb_rx_empty && usb_tx_full) next_state = init;
-        else if (!usb_rx_empty) next_state = read;
+        else if (!usb_rx_empty) next_state = init_read;
       end
     endcase
 

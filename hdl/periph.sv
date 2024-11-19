@@ -84,7 +84,7 @@ module periph #(
   // TODO: need to account for FIFO read latency of 1 cycle
   // TODO: change FIFO widths to 29 bits? (stripping address)
 
-  assign rx_fifo_din[usb_packet_width-1:usb_packet_width-periph_address_width] = ADDRESS;
+//   assign rx_fifo_din[usb_packet_width-1:usb_packet_width-periph_address_width] = ADDRESS;
 
   reconfig_periph_wrapper reconfig_periph (
       .clk(clk),
@@ -92,10 +92,10 @@ module periph #(
       .in(in),
       .out(out),
       .tristate(tristate),
-      .tx_data(tx_fifo_dout[usb_packet_width-periph_address_width-1:0]),
+      .tx_data(tx_fifo_dout[usb_packet_width-1:0]),
       .tx_empty(tx_fifo_empty),
       .tx_read(tx_fifo_rden),
-      .rx_data(rx_fifo_din[usb_packet_width-periph_address_width-1:0]),
+      .rx_data(rx_fifo_din[usb_packet_width-1:0]),
       .rx_valid(rx_fifo_wren),
       .rx_fifo_full(rx_fifo_full),
       .idle(idle)
@@ -103,10 +103,12 @@ module periph #(
 
   // Connect FIFOs to top-level signals
   assign tx_fifo_din = tx_data;
-  assign tx_fifo_wren = tx_valid & (tx_data[usb_packet_width-1:usb_packet_width-periph_address_width] == ADDRESS);
+//   assign tx_fifo_wren = tx_valid & (tx_data[usb_packet_width-1:usb_packet_width-periph_address_width] == ADDRESS);
+  assign tx_fifo_wren = tx_valid;
   assign tx_full = tx_fifo_full;
 
-  assign rx_data = {ADDRESS, rx_fifo_dout[usb_packet_width-periph_address_width-1:0]};
+  assign rx_data = rx_fifo_dout[usb_packet_width-1:0];
+//   assign rx_data = {ADDRESS, rx_fifo_dout[usb_packet_width-periph_address_width-1:0]};
   assign rx_fifo_rden = rx_read;
   assign rx_empty = rx_fifo_empty;
   assign rx_almost_full = rx_fifo_almost_full;
