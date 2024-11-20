@@ -67,3 +67,14 @@
 
 ## 11/14/24
 - All: Continue work debugging Lycan on the FPGA (2 hrs)
+
+## 11/15/24
+- Matthew S: Work on fixing FTDI FIFO Clk configuration issue, measuring with scope (2 hrs)
+- Matthew S: Explore FTDI-provided Python source code for a loopback test - compare to own code (0.5 hrs)
+
+## 11/19/24
+- All: Continue to debug Lycan and FTDI, running tests (2 hrs)
+- Matthew S: Fix Clock issue - for good (after talking with FTDI support) (1 hr)
+
+## 11/20/24
+- Matthew S: Work on GUI prototype, add multiple tabs for 8 peripherals (1 hr)
