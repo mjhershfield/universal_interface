@@ -2,3 +2,7 @@
 vivado/*
 !vivado/universal_interface.xpr
 !vivado/universal_interface.srcs
+vivado/universal_interface.srcs/**/*.dcp
+
+# Do not version control compiled binary files
+software/**/*.pyc

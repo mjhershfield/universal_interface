@@ -181,3 +181,12 @@ Alternatively, multiple channels could be used instead of the configuration flag
 - [FT601 USB FIFO IC Device Info](https://ftdichip.com/products/ft601q-b/)
 - [FT601 Dev Board Device Info](https://ftdichip.com/products/umft601x-b/)
 - [D3XX (FTDI USB3 Driver) Info](https://ftdichip.com/drivers/d3xx-drivers/)
+
+### Timing Constraints
+- [Video on I/O delay constraints](https://www.xilinx.com/video/hardware/setting-input-delay.html). Useful graphic at 1:00
+- [Vivado Constraints user guide](https://www.xilinx.com/support/documents/sw_manuals/xilinx2022_1/ug903-vivado-using-constraints.pdf)
+- [Sample project w/ clock constraints for FT601](https://ftdichip.com/wp-content/uploads/2020/07/AN_421_FIFO_Bus_Master_For-FT60x.pdf)
+- [Xilinx Help Thread 1](https://adaptivesupport.amd.com/s/feed/0D52E00006hpmp2SAA?language=en_US)
+- [Xilinx Help Thread 2](https://adaptivesupport.amd.com/s/question/0D52E00006hpnBtSAI/sanity-check-of-basic-timing-constraints?language=en_US)
+- Timing info for FT601 is on page 17 of the [datasheet](https://ftdichip.com/wp-content/uploads/2020/07/DS_FT600Q-FT601Q-IC-Datasheet.pdf).
+- [Understanding UCF OFFSET constraint](https://docs.amd.com/v/u/en-US/wp237)
