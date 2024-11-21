@@ -78,3 +78,7 @@
 
 ## 11/20/24
 - Matthew S: Work on GUI prototype, add multiple tabs for 8 peripherals (1 hr)
+
+## 11/21/24
+- Matthew S: Test lycan_loopback.py & gui.py programs with the FPGA connected (1 hr)
+- Adam B, Matthew H, Gilon K: Discuss HW design and new GPIO peripheral (1 hr)
