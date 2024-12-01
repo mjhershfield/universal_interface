@@ -82,3 +82,6 @@
 ## 11/21/24
 - Matthew S: Test lycan_loopback.py & gui.py programs with the FPGA connected (1 hr)
 - Adam B, Matthew H, Gilon K: Discuss HW design and new GPIO peripheral (1 hr)
+
+## 11/29/24
+- Matthew S: Research Python packaging using pyinstaller, make the GUI and .exe for Windows (2 hrs)
