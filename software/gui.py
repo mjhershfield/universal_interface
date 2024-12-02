@@ -50,14 +50,14 @@ def write_to_FIFO(dev, turn_lock, periphAddr, isConfig, data, isHex):
     print(packet_num)
     if(packet_num != -1):
         # Convert integer packet to bytes object
-        packet = packet_num.to_bytes(3, 'big')
+        packet = packet_num.to_bytes(3, 'little')
         # Write to the FIFO
         num_bytes_written = ftdi.send_data_packet(dev, peripheral_addr=periphAddr, data=packet)
     else:
         return None, -1
     with turn_lock:
         turn = 'R' # Resume the reading thread
-    return packet_num.to_bytes(3, 'big'), num_bytes_written
+    return packet_num.to_bytes(3, 'little'), num_bytes_written
 
 # Thread for reading from FIFO (Pauses if writing)
 def read_thread(dev, GUI):
@@ -67,13 +67,14 @@ def read_thread(dev, GUI):
         if(turn == 'R'):
             # Read from the FIFO
             data_in = ftdi.read_packet(dev)[1]
-            print(data_in)
+            print('Read:', data_in)
             if(data_in != None):
                 # Send the read packet to the corresponding peripheral tab
-                periphIndex = int.from_bytes(data_in, 'big') >> 29
+                periphIndex = int.from_bytes(data_in, 'little') >> 29
                 if(GUI.peripheralTabs[periphIndex]):
-                    GUI.peripheralTabs[periphIndex].displayRXData(str(data_in.hex()))
-            time.sleep(1/1000) # Sleep for 1 ms (may change this later)
+                    data = data_in[0:3]
+                    GUI.peripheralTabs[periphIndex].displayRXData(str(hex(int.from_bytes(data, 'little'))))
+        time.sleep(1000) # Sleep for 1 ms (may change this later)
 
 # Peripheral Tab Class #
 class PeripheralTab(QWidget):
@@ -140,12 +141,11 @@ class PeripheralTab(QWidget):
             self.errorLabel.setText(message)
         else:
             self.errorLabel.setText('') # Reset the error text box
-            self.txDataField.setText('') # Reset the TX field text
-            self.rxDataLabel.append(f'\tWrote {res[1]} bytes to the FIFO.')
-            self.rxDataLabel.append(f'Data written to FIFO: {res[0]}')
+            # self.txDataField.setText('') # Reset the TX field text
+            self.rxDataLabel.append(f'\tWrote {res[1]} bytes to the FIFO.\n')
 
     def displayRXData(self, data):
-        self.rxDataLabel.append(data+'\n')
+        self.rxDataLabel.append('Read: '+data+'\n')
 
 # Main Window Class #
 class LycanWindow(QTabWidget):

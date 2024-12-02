@@ -2,7 +2,7 @@ import argparse
 import ftd3xx
 from ftd3xx.defines import *
 import ftd3xx_functions as fifo
-import time, sys
+import time, sys, random
 
 def str_to_num(inStr, isHex):
     res = 0
@@ -52,24 +52,35 @@ def main(loopCount):
         raise Exception('Error: No devices detected. Exiting...')
 
     successCount = 0
+    pId = 0
     for run in range(loopCount):
         # Try to send data to the FIFO
-        data = b'\x01\x23\x45'
-        rawPacket = 0x3c012345
-        fifo.send_data_packet(device=dev, pipe=0x02, peripheral_addr=0, data=data)
+        data = random.getrandbits(24).to_bytes(3, 'little')
+        rawPacket = pId << 32-3 # address
+        rawPacket += 0 << 32-4 # config flag bit
+        rawPacket += 3 << 32-6 # num valid bytes
+        rawPacket += 3 << 32-8 # don't cares (set to 1 for now)
+        rawPacket += int.from_bytes(data, byteorder='little')
+
+        fifo.send_data_packet(device=dev, pipe=0x02, peripheral_addr=pId, data=data)
         isConfig, readData = fifo.read_packet(device=dev, pipe=0x82)
 
         # Compare write/read data
-        if(readData != None and rawPacket == int.from_bytes(readData, 'big')):
+        if(readData != None and rawPacket == int.from_bytes(readData, 'little')):
             successCount += 1
             print('******************************   The loopback worked! Yay!   ******************************')
         else:
-            print('Loopback Failed :(')
+            print('******************************   Loopback Failed :(   ******************************')
+
+        # Increment the peripheral ID
+        pId = (pId + 1) % 8
     
     print(f'\n\n\n**********\tNumber of successes: {successCount}\t({(successCount/loopCount)*100}%)\t**********\n')
 
+    key = input('\n\nPress any key to exit...')
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="data loopback demo application")
-    parser.add_argument('-l', '--loop_count', type=int, default=1, help="number of tests to run (default is 1)")
+    parser.add_argument('-l', '--loop_count', type=int, default=10000, help="number of tests to run (default is 10000)")
     args = parser.parse_args()
     main(args.loop_count)
