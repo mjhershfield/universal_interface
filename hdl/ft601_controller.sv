@@ -21,10 +21,17 @@ module ft601_controller (
     input logic [ 3:0] i_valid, //what bytes of data are valid
 
     //ftdi data bus
-    inout logic [31:0] data,
-    inout logic [ 3:0] be,    //what bytes of data are valid
+    //inout logic [31:0] data,
+    //inout logic [ 3:0] be,    //what bytes of data are valid
     //output logic be_ts,
     //output logic data_ts,
+    input logic [31:0] bidir_in,
+    output logic [31:0] bidir_out,
+    output logic [31:0] bidir_tri,
+
+    input logic [3:0] be_in,
+    output logic [3:0] be_out,
+    output logic [3:0] be_tri,
 
     // Whether valid data is coming from the arbiter
     input  logic periph_data_available,
@@ -74,8 +81,8 @@ module ft601_controller (
         usb_outen_l = 1'b0;
         usb_rden_l = 1'b0;
 
-        data_o = data;
-        o_valid = usb_rx_empty ? 4'b0 : be;
+        data_o = bidir_in;
+        o_valid = usb_rx_empty ? 4'b0 : be_in;
 
         if (usb_rx_empty && usb_tx_full) next_state = init;
         else if (usb_rx_empty && !usb_tx_full) next_state = write;
@@ -95,8 +102,12 @@ module ft601_controller (
     if (!periph_ready) next_state = init;
   end
 
-  assign data = (!usb_wren_l) ? data_i : {32{1'bz}};  //if writing data bus is data in, otherwise tri
-  assign be = (!usb_wren_l) ? 4'b1111 : 4'bzzzz;  //if writing BE is 1111 (temporary)
+  assign bidir_out = data_i;
+  
+  assign bidir_tri = (!usb_wren_l) ? '0 : 32'hFFFFFFFF; //if writing, do not tristate, otherise tristate
+  assign be_tri = (!usb_wren_l) ? 4'b0000 : 4'b1111;  //if writing do not tri, otherwise tri
+  assign be_out = 4'b1111; //temporary, all data is valid
+  
   assign usb_rst_l = ~rst;
 
 endmodule
