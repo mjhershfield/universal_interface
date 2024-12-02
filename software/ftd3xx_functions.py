@@ -22,10 +22,10 @@ def send_data_packet(device, pipe=0x02, peripheral_addr=0, data=b'ABC'):
     if(peripheral_addr < 0 or peripheral_addr > 7):
         raise Exception('Error: The peripheral address is out of range (0 to 7)')
     # Construct the packet
-    packet = peripheral_addr << 32 # address
-    packet += 0 << 29 # config flag bit
-    packet += datalen << 28 # num valid bytes
-    packet += 3 << 26 # don't cares (set to 1 for now)
+    packet = peripheral_addr << 32-3 # address
+    packet += 0 << 32-4 # config flag bit
+    packet += datalen << 32-6 # num valid bytes
+    packet += 3 << 32-8 # don't cares (set to 1 for now)
     packet += int.from_bytes(data, byteorder='big')
     # Print the packet - DEBUG
     print('Packet to be transmitted:', hex(packet))
@@ -33,7 +33,7 @@ def send_data_packet(device, pipe=0x02, peripheral_addr=0, data=b'ABC'):
     transferred = 0
     while(transferred != 4):
         # write data to specified pipe	
-        transferred += device.writePipe(pipe=pipe, data=data, datalen=4-transferred)
+        transferred += device.writePipe(pipe=pipe, data=packet.to_bytes(4, 'big'), datalen=4-transferred)
         # check status of writing data
         status = device.getLastError()
         if(status != 0):
@@ -47,20 +47,20 @@ def read_packet(device, pipe=0x82):
     transferred = 0
     buffread = b''
     while(transferred != 4):                    
-        # Read data from specified pipe
-        output = device.readPipeEx(pipe=pipe, datalen=(4 - transferred))
-        buffread += output['bytes']
-        transferred += output['bytesTransferred']
         # Check status
         status = device.getLastError()
         if(status != 0):
             device.abortPipe(pipe)
             print(f'Error with reading. Status Code {status}')
             break
+        # Read data from specified pipe
+        output = device.readPipeEx(pipe=pipe, datalen=(4 - transferred))
+        buffread += output['bytes']
+        transferred += output['bytesTransferred']
     if(len(buffread) > 0):
         # Check if the read packet is a configuration packet response (coming from Lycan)
         is_config = buffread[0] & 0b00010000
-        print('Bytes read:', buffread.hex())
+        print('Bytes read:', hex(int.from_bytes(buffread, 'big')))
         return is_config, buffread
     else:
         return False, None

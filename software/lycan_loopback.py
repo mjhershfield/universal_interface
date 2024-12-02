@@ -55,17 +55,18 @@ def main(loopCount):
     for run in range(loopCount):
         # Try to send data to the FIFO
         data = b'\x01\x23\x45'
+        rawPacket = 0x3c012345
         fifo.send_data_packet(device=dev, pipe=0x02, peripheral_addr=0, data=data)
         isConfig, readData = fifo.read_packet(device=dev, pipe=0x82)
 
         # Compare write/read data
-        if(readData != None and data == int.from_bytes(readData, 'big')):
-            loopCount += 1
+        if(readData != None and rawPacket == int.from_bytes(readData, 'big')):
+            successCount += 1
             print('******************************   The loopback worked! Yay!   ******************************')
         else:
             print('Loopback Failed :(')
     
-    print(f'\n\n\n**********\tNumber of successes: {successCount}\t({successCount/loopCount}%)\t**********\n')
+    print(f'\n\n\n**********\tNumber of successes: {successCount}\t({(successCount/loopCount)*100}%)\t**********\n')
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="data loopback demo application")

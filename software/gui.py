@@ -51,10 +51,8 @@ def write_to_FIFO(dev, turn_lock, periphAddr, isConfig, data, isHex):
     if(packet_num != -1):
         # Convert integer packet to bytes object
         packet = packet_num.to_bytes(3, 'big')
-        print(packet)
         # Write to the FIFO
         num_bytes_written = ftdi.send_data_packet(dev, peripheral_addr=periphAddr, data=packet)
-        print('Number of bytes written', num_bytes_written, '\n')
     else:
         return None, -1
     with turn_lock:
@@ -68,13 +66,14 @@ def read_thread(dev, GUI):
         # Pause if it's writing's turn
         if(turn == 'R'):
             # Read from the FIFO
-            data_in = ftdi.read_packet(dev)
+            data_in = ftdi.read_packet(dev)[1]
+            print(data_in)
             if(data_in != None):
-                print(f'Packet received: {data_in[1]}')
                 # Send the read packet to the corresponding peripheral tab
-                periphIndex = int.from_bytes(data_in[1]) >> 29
+                periphIndex = int.from_bytes(data_in, 'big') >> 29
                 if(GUI.peripheralTabs[periphIndex]):
-                    GUI.peripheralTabs[periphIndex].displayRXData(data_in[1].hex())
+                    GUI.peripheralTabs[periphIndex].displayRXData(str(data_in.hex()))
+            time.sleep(1/1000) # Sleep for 1 ms (may change this later)
 
 # Peripheral Tab Class #
 class PeripheralTab(QWidget):
@@ -130,9 +129,6 @@ class PeripheralTab(QWidget):
         layout.setVerticalSpacing(10)
         self.setLayout(layout)
 
-        # Show the GUI
-        # self.show()
-
     # On request to send to FIFO
     def onSubmitTX(self):
         res = write_to_FIFO(self.dev, self.turn_lock, self.pIndex, False, self.txDataField.text(), self.txTypeCombo.currentText()=='Hex')
@@ -181,27 +177,25 @@ if __name__ == '__main__':
     # Create a lock (used to set whose turn it is to use the FTDI - Read or Write)
     turn_lock = threading.Lock()
 
-    # # Get the connected FTDI device
-    # numDevices = ftd3xx.createDeviceInfoList()
-    # devices = ftd3xx.getDeviceInfoList()
-    # if(devices != None):
-    #     # Create a ftd3xx device instance
-    #     dev = ftd3xx.create(devices[0].SerialNumber, FT_OPEN_BY_SERIAL_NUMBER)
-    #     devInfo = dev.getDeviceInfo()
-    #     dev.setPipeTimeout(0x02, 3000)
-    #     dev.setPipeTimeout(0x82, 3000)
-    #     dev.setSuspendTimeout(0)
-    #     # Print some info about the device
-    #     print('\nDevice Info:')
-    #     print(f'\tType: {devInfo["Type"]}')
-    #     print(f'\tID: {devInfo["ID"]}')
-    #     print(f'\tDescr.: {devInfo["Description"]}')
-    #     print(f'\tSerial Num: {devInfo["Serial"]}')
-    # else:
-    #     message = 'Error: No devices detected. Exiting...'
-    #     sys.exit()
-
-    dev = 0
+    # Get the connected FTDI device
+    numDevices = ftd3xx.createDeviceInfoList()
+    devices = ftd3xx.getDeviceInfoList()
+    if(devices != None):
+        # Create a ftd3xx device instance
+        dev = ftd3xx.create(devices[0].SerialNumber, FT_OPEN_BY_SERIAL_NUMBER)
+        devInfo = dev.getDeviceInfo()
+        dev.setPipeTimeout(0x02, 500)
+        dev.setPipeTimeout(0x82, 500)
+        dev.setSuspendTimeout(0)
+        # Print some info about the device
+        print('\nDevice Info:')
+        print(f'\tType: {devInfo["Type"]}')
+        print(f'\tID: {devInfo["ID"]}')
+        print(f'\tDescr.: {devInfo["Description"]}')
+        print(f'\tSerial Num: {devInfo["Serial"]}')
+    else:
+        message = 'Error: No devices detected. Exiting...'
+        sys.exit()
 
     app = QApplication(sys.argv)
     gui = LycanWindow(turn_lock, dev, 8)
