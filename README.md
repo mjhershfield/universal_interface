@@ -40,6 +40,9 @@ Pre-Alpha Build - Week 10-11
 - Initial System Verilog code for the major components of the hardware system (bus arbiter, FT601 controller, loopback peripheral)
   
 Design Prototype - Weeks 13-15
+- Fixed an FTDI clock issue (100 MHz clock suspending when USB goes into "suspend") - now, never suspends
+- Debugged FPGA in Vivado while reading data, seeing what was read (and when)
+- Further developed FPGA Verilog to meet specifications (integrating all of the components designed so far)
 - Loopback peripheral working (looping back full 4-byte packet) with good success over 10000 runs
 - GUI still in progress, but working - with some bugs
 
