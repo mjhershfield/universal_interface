@@ -11,17 +11,20 @@ Phase 1: GPIO Peripheral and Peripheral Muxing (Weeks 1 - 3)
 - Finalize UART design & verify implementation (Andres, Adam)
 - Create circuitry needed for peripheral muxing (Matthew H)
 - Finalize GPIO peripheral and map peripheral mux selects to configuration registers (Gilon)
+  
 Phase 2: Peripheral Implementation (Weeks 3 - 6: Alpha Build)
 - Design and verify SPI (Andres)
 - Design and verify JTAG (Adam)
 - Design and verify I2C (Gilon)
 - Begin work on dynamic reconfiguration (Matthew H)
 - Lower costs and enable logic level translation with a custom PCB (Matthew S; In parallel during weeks 1 - 6)
+  
 Phase 3: Hardware Reconfigurability & Custom PCB (Weeks 6 - 10: Release Candidate)
 - Develop architecture for runtime protocol switching
 - Integrate reconfigurable hardware with UART, SPI, JTAG peripherals
 - Finalize Python API and GUI script(s)
 - Assemble PCB & testing
+  
 Phase 4: Final Integration Testing (Weeks 10 - 14: Production Release)
 - User testing
 - Resilience testing
@@ -30,16 +33,19 @@ Phase 4: Final Integration Testing (Weeks 10 - 14: Production Release)
 Design Revision - Week 8
 - Finished Design Plan Draft
 - Researched protocols and drivers
+  
 Pre-Alpha Build - Week 10-11
 - Able to communicate with FTDI chip (reading info and configuration, but not FIFO data)
 - Simple FT3DXX Python script with virtual environment set up
 - Initial System Verilog code for the major components of the hardware system (bus arbiter, FT601 controller, loopback peripheral)
+  
 Design Prototype - Weeks 13-15
 - Loopback peripheral working (looping back full 4-byte packet) with good success over 10000 runs
 - GUI still in progress, but working - with some bugs
 
 ## Current Bugs
 Currently, there is a bug in the GUI software that is causing the FTDI board to crash randomly, and stop receiving. It can be fixed by either power cycling the FTDI board, or repeatedly sending data (until it's received). This is most likely due to the multithreading done by the gui.py script. Further info coming soon.
+
 In the experimental loopback code (including peripheral muxing), we are seeing issues with junk data being sent back (works about 50-67% of the time in 10000 runs). We will continue to work on this and finish peripheral muxing by our first milestone next semester.
 
 ## Design Plan Information - Hardware
