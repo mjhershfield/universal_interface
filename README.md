@@ -3,8 +3,8 @@
 Team Members:
 Matthew Hershfield, Adam Bracci, Gilon Kravatsky, Matthew Self, Andres Muskus
 
-[!NOTE:]
-If loopback doesn't work, make sure you have flashed the FPGA with a fresh bitstream and you pressed the CPU_RST button on the Nexys Video.
+> [!NOTE]
+> If loopback doesn't work, make sure you have flashed the FPGA with a fresh bitstream and you pressed the CPU_RST button on the Nexys Video.
 
 ## Timeline (Projected - Spring 2025)
 Phase 1: GPIO Peripheral and Peripheral Muxing (Weeks 1 - 3)
