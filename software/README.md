@@ -1,5 +1,11 @@
 # Software Setup Information
-## Create a Python virtual environment
+## Option 1: .EXE - Preferred (Windows only - currently)
+Simply download the gui.exe or lycan_loopback.exe file from the software/dist or software/dist/lycan_loopback directory.
+Click the .exe file to execute, and you are all set!
+> [!Note]
+> Make sure the Lycan system (through the FTDI board) is plugged in before you run the programs
+
+## Option 2: Create a Python virtual environment (Windows or Linux)
 
 > [!NOTE]  
 > Don't use the Github repo for your virtual environment location
