@@ -10,32 +10,32 @@ module mock_fifo #(
     input logic rden,
     input logic outen,
     output logic [WIDTH-1:0] dout,
-    output logic empty
+    output logic empty,
+    inout logic [3:0] be
 );
   int remaining_data_amt;
   logic [WIDTH-1:0] dout_r;
 
   always @(posedge clk or posedge rst) begin
     if (rst) begin
-      dout_r[29:0] <= $urandom;
+      dout_r <= $urandom;
       remaining_data_amt <= INITIAL_FILLED;
     end else begin
       if (rden) begin
         if (remaining_data_amt > 0) begin
           remaining_data_amt <= remaining_data_amt - 1;
-          dout_r[29:0] = $urandom;
+          dout_r = $urandom;
         end else begin
-          dout_r[29:0] <= 0;
+          dout_r <= 0;
         end
       end
     end
   end
 
-  assign dout_r[31:30] = 2'b0;
-
   assign dout = (outen) ? dout_r : 'z;
 
   assign empty = (delay) ? '1 : remaining_data_amt == 0;
+  assign be = (outen) ? {4{~empty}} : 'z;
 
 endmodule
 
@@ -48,7 +48,7 @@ module lycan_tb;
   logic delay;
   wire [31:0] dout;
   logic outen;
-  logic empty;
+  wire empty;
 
   // LYCAN PINS
   logic rst_l;
@@ -76,12 +76,15 @@ module lycan_tb;
 
   mock_fifo #(
       .WIDTH(WIDTH),
-      .INITIAL_FILLED(5)
+      .INITIAL_FILLED(8)
   ) fdti_input (
       .dout(usb_data),
+      .be(usb_be),
       .*
   );
-  lycan DUT (.*);
+  lycan DUT (
+    .*
+  );
 
   always begin : generate_clk
     clk <= ~clk;

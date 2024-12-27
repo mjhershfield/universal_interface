@@ -26,9 +26,12 @@ module arbiter (
   end
 
   always_ff @(posedge clk) begin
-    if (rst) curr_grant <= 0;
-    else if (read_periph_data) curr_grant <= next_grant + curr_grant;
-    else curr_grant <= curr_grant;
+    if (rst) begin
+      curr_grant <= 0;
+    end else begin
+      if (read_periph_data) curr_grant <= next_grant + curr_grant;
+      else curr_grant <= curr_grant;
+    end
   end
 
   // Structural

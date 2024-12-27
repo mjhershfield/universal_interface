@@ -47,7 +47,8 @@ module periph #(
       rx_fifo_almost_full,
       rx_fifo_wr_rst_busy,
       rx_fifo_rd_rst_busy;
-  logic [usb_packet_width-1:0] rx_fifo_din, rx_fifo_dout;
+  logic [usb_packet_width-periph_address_width-1:0] rx_fifo_din;
+  logic [usb_packet_width-1:0] rx_fifo_dout;
 
 
   // Connect to FIFOs (top bits of FIFOs are constant address)
@@ -69,7 +70,7 @@ module periph #(
   periph_local_rx_fifo rx_fifo (
       .clk(clk),
       .rst(rst),
-      .din(rx_fifo_din),
+      .din({ADDRESS, rx_fifo_din}),
       .wr_en(rx_fifo_wren),
       .rd_en(rx_fifo_rden),
       .dout(rx_fifo_dout),
@@ -92,10 +93,10 @@ module periph #(
       .in(in),
       .out(out),
       .tristate(tristate),
-      .tx_data(tx_fifo_dout[usb_packet_width-1:0]),
+      .tx_data(tx_fifo_dout[usb_packet_width-periph_address_width-1:0]),
       .tx_empty(tx_fifo_empty),
       .tx_read(tx_fifo_rden),
-      .rx_data(rx_fifo_din[usb_packet_width-1:0]),
+      .rx_data(rx_fifo_din),
       .rx_valid(rx_fifo_wren),
       .rx_fifo_full(rx_fifo_full),
       .idle(idle)
@@ -103,12 +104,10 @@ module periph #(
 
   // Connect FIFOs to top-level signals
   assign tx_fifo_din = tx_data;
-//   assign tx_fifo_wren = tx_valid & (tx_data[usb_packet_width-1:usb_packet_width-periph_address_width] == ADDRESS);
-  assign tx_fifo_wren = tx_valid;
+  assign tx_fifo_wren = tx_valid & (tx_data[usb_packet_width-1:usb_packet_width-periph_address_width] == ADDRESS);
   assign tx_full = tx_fifo_full;
 
-  assign rx_data = rx_fifo_dout[usb_packet_width-1:0];
-//   assign rx_data = {ADDRESS, rx_fifo_dout[usb_packet_width-periph_address_width-1:0]};
+  assign rx_data = {ADDRESS, rx_fifo_dout[usb_packet_width-periph_address_width-1:0]};
   assign rx_fifo_rden = rx_read;
   assign rx_empty = rx_fifo_empty;
   assign rx_almost_full = rx_fifo_almost_full;
