@@ -2,14 +2,20 @@ import ftd3xx
 from ftd3xx.defines import *
 import time
 
-def send_data(device, pipe=0x82, peripheral_addr=0, data=b'ABC'):
-    # For every 3 bytes of data, send a packet
-    while(len(data) >= 3):
-        send_data_packet(device, pipe, peripheral_addr, data[0:3])
-        data = data[3:]
-    # Send the rest of the data
-    if(len(data) > 0):
-        send_data_packet(device, pipe, peripheral_addr, data)
+def send_raw_data(device, pipe=0x82, data=b'ABCD'):
+    # Transmit the data
+    transferred = 0
+    while(transferred != len(data)):
+        # write data to specified pipe	
+        transferred += device.writePipe(pipe=pipe, data=data, datalen=4-transferred)
+        # check status of writing data
+        status = device.getLastError()
+        if(status != 0):
+            device.abortPipe(pipe)
+            print(f'Error with writing. Status Code {status}')
+            break
+    # Return number of bytes written
+    return transferred
 
 def send_data_packet(device, pipe=0x02, peripheral_addr=0, data=b'ABC'):
     # Check that data is 3 bytes or less
@@ -28,20 +34,17 @@ def send_data_packet(device, pipe=0x02, peripheral_addr=0, data=b'ABC'):
     packet += 3 << 32-8 # don't cares (set to 1 for now)
     packet += int.from_bytes(data, byteorder='little')
     # Print the packet - DEBUG
-    print('Packet to be transmitted:', hex(int.from_bytes(packet.to_bytes(4, 'big'), byteorder='big')))
-    # Transmit the packet
-    transferred = 0
-    while(transferred != 4):
-        # write data to specified pipe	
-        transferred += device.writePipe(pipe=pipe, data=packet.to_bytes(4, 'little'), datalen=4-transferred)
-        # check status of writing data
-        status = device.getLastError()
-        if(status != 0):
-            device.abortPipe(pipe)
-            print(f'Error with writing. Status Code {status}')
-            break
-    # Return number of bytes written
-    return transferred
+    # print('Packet to be transmitted:', hex(int.from_bytes(packet.to_bytes(4, 'big'), byteorder='big')))
+    return send_raw_data(device=device, pipe=pipe, data=packet.to_bytes(4, 'little'))
+
+def send_data(device, pipe=0x82, peripheral_addr=0, data=b'ABC'):
+    # For every 3 bytes of data, send a packet
+    while(len(data) >= 3):
+        send_data_packet(device, pipe, peripheral_addr, data[0:3])
+        data = data[3:]
+    # Send the rest of the data
+    if(len(data) > 0):
+        send_data_packet(device, pipe, peripheral_addr, data)
 
 def read_packet(device, pipe=0x82):
     transferred = 0
@@ -60,7 +63,7 @@ def read_packet(device, pipe=0x82):
     if(len(buffread) > 0):
         # Check if the read packet is a configuration packet response (coming from Lycan)
         is_config = buffread[0] & 0b00010000
-        print('Bytes read:', hex(int.from_bytes(buffread, 'little')))
+        # print('Bytes read:', hex(int.from_bytes(buffread, 'little')))
         return is_config, buffread
     else:
         return False, None

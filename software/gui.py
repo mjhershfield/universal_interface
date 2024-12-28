@@ -6,7 +6,7 @@ from PyQt6.QtWidgets import (
     QTabWidget
 )
 from PyQt6.QtGui import QIntValidator, QColor
-import ftd3xx, threading, time
+import ftd3xx, threading, time, queue
 from ftd3xx.defines import *
 import ftd3xx_functions as ftdi
 
@@ -42,10 +42,8 @@ def str_to_num(inStr, isHex):
                 return -1 # Not a proper hex string
         return res
     
-def write_to_FIFO(dev, turn_lock, periphAddr, isConfig, data, isHex):
-    global turn
-    with turn_lock:
-        turn = 'W' # Pause the reading thread
+def write_to_FIFO(dev, q, periphAddr, isConfig, data, isHex):
+    q.get(block=True) # Wait for RX thread to be done with current read
     packet_num = str_to_num(data, isHex)
     print(packet_num)
     if(packet_num != -1):
@@ -53,37 +51,37 @@ def write_to_FIFO(dev, turn_lock, periphAddr, isConfig, data, isHex):
         packet = packet_num.to_bytes(3, 'little')
         # Write to the FIFO
         num_bytes_written = ftdi.send_data_packet(dev, peripheral_addr=periphAddr, data=packet)
+        q.put('TX Done')
+        return packet, num_bytes_written
     else:
+        q.put('TX Done')
         return None, -1
-    with turn_lock:
-        turn = 'R' # Resume the reading thread
-    return packet_num.to_bytes(3, 'little'), num_bytes_written
 
 # Thread for reading from FIFO (Pauses if writing)
-def read_thread(dev, GUI):
-    global turn
+def read_from_FIFO(dev, GUI, q):
     while(True):
-        # Pause if it's writing's turn
-        if(turn == 'R'):
-            # Read from the FIFO
-            data_in = ftdi.read_packet(dev)[1]
-            print('Read:', data_in)
-            if(data_in != None):
-                # Send the read packet to the corresponding peripheral tab
-                periphIndex = int.from_bytes(data_in, 'little') >> 29
-                if(GUI.peripheralTabs[periphIndex]):
-                    data = data_in[0:3]
-                    GUI.peripheralTabs[periphIndex].displayRXData(str(hex(int.from_bytes(data, 'little'))))
-        time.sleep(1000) # Sleep for 1 ms (may change this later)
+        q.get(block=True) # Wait for TX thread to be done, if it started
+        # Read from the FIFO
+        data_in = ftdi.read_packet(dev)[1]
+        print('Read:', data_in)
+        if(data_in != None):
+            # Send the read packet to the corresponding peripheral tab
+            periphIndex = int.from_bytes(data_in, 'little') >> 29
+            if(GUI.peripheralTabs[periphIndex]):
+                data = data_in[0:3]
+                GUI.peripheralTabs[periphIndex].displayRXData(str(hex(int.from_bytes(data, 'little'))))
+        # Tell the main thread we are sleeping
+        q.put('RX Sleeping')
+        time.sleep(1) # Sleep for 1 ms (gives time for TX thread to take lock)
 
 # Peripheral Tab Class #
 class PeripheralTab(QWidget):
 
     # Constructor
-    def __init__(self, turn_lock, dev, peripheralIndex=0):
+    def __init__(self, threadQueue, dev, peripheralIndex=0):
         super().__init__()
 
-        self.turn_lock = turn_lock
+        self.threadQueue = threadQueue
         self.dev = dev
         self.pIndex = peripheralIndex
 
@@ -132,7 +130,7 @@ class PeripheralTab(QWidget):
 
     # On request to send to FIFO
     def onSubmitTX(self):
-        res = write_to_FIFO(self.dev, self.turn_lock, self.pIndex, False, self.txDataField.text(), self.txTypeCombo.currentText()=='Hex')
+        res = write_to_FIFO(self.dev, self.threadQueue, self.pIndex, False, self.txDataField.text(), self.txTypeCombo.currentText()=='Hex')
         if(res[1] == -1):
             message = 'Issue with input (may have too many bytes, or formatting is wrong - use binary or hex), try again.'
             self.errorLabel.setText(message)
@@ -151,10 +149,10 @@ class PeripheralTab(QWidget):
 class LycanWindow(QTabWidget):
 
     # Constructor
-    def __init__(self, turn_lock, dev, numPeripherals):
+    def __init__(self, threadQueue, dev, numPeripherals):
         super().__init__()
 
-        self.turn_lock = turn_lock
+        self.threadQueue = threadQueue
         self.dev = dev
 
         self.setWindowTitle("Lycan Universal Interface")
@@ -163,7 +161,7 @@ class LycanWindow(QTabWidget):
         # Tab Setup #
         self.peripheralTabs = []
         for i in range(numPeripherals):
-            self.peripheralTabs += [PeripheralTab(turn_lock, dev, i)]
+            self.peripheralTabs += [PeripheralTab(threadQueue, dev, i)]
             self.addTab(self.peripheralTabs[i], f'Peripheral {i}')
             print(f'Added Periph Tab #{i}')
 
@@ -174,8 +172,8 @@ class LycanWindow(QTabWidget):
 # Main #
 if __name__ == '__main__':
 
-    # Create a lock (used to set whose turn it is to use the FTDI - Read or Write)
-    turn_lock = threading.Lock()
+    # Create a queue for message passing between main thread and RX thread
+    threadQueue = queue.Queue()
 
     # Get the connected FTDI device
     numDevices = ftd3xx.createDeviceInfoList()
@@ -198,9 +196,9 @@ if __name__ == '__main__':
         sys.exit()
 
     app = QApplication(sys.argv)
-    gui = LycanWindow(turn_lock, dev, 8)
+    gui = LycanWindow(threadQueue, dev, 8)
 
-    read_t = threading.Thread(target=read_thread, args=(dev, gui,), daemon=True)
+    read_t = threading.Thread(target=read_from_FIFO, args=(dev, gui, threadQueue), daemon=True)
 
     # Start the reading thread
     read_t.start()
