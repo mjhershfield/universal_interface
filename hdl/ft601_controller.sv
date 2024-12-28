@@ -14,24 +14,17 @@ module ft601_controller (
 
     //data going to peripheral
     output logic [31:0] data_o,
-    output logic [ 3:0] o_valid, //what bytes of data are valid
+    output logic rd_data_valid,
 
-    //data coming from peripheral
-    input logic [31:0] data_i,
-    input logic [ 3:0] i_valid, //what bytes of data are valid
-
-    //ftdi data bus
-    //inout logic [31:0] data,
-    //inout logic [ 3:0] be,    //what bytes of data are valid
-    //output logic be_ts,
-    //output logic data_ts,
-    input logic [31:0] bidir_in,
-    output logic [31:0] bidir_out,
-    output logic [31:0] bidir_tri,
+    // USB DATA BUS
+    // TODO: change data_i/o, i/o_valid to use usb_data_* outside of this module.
+    // input logic [31:0] usb_data_in,
+    // output logic [31:0] usb_data_out,
+    output logic usb_data_tri,
 
     input logic [3:0] be_in,
     output logic [3:0] be_out,
-    output logic [3:0] be_tri,
+    output logic be_tri,
 
     // Whether valid data is coming from the arbiter
     input  logic periph_data_available,
@@ -63,8 +56,7 @@ module ft601_controller (
     usb_wren_l = 1;
     next_state = state_r;
     data_o = '0;
-    o_valid = 0;
-    read_periph_data = '0;
+    rd_data_valid = 0;
 
     unique case (state_r)
       init: begin
@@ -80,9 +72,10 @@ module ft601_controller (
       read: begin
         usb_outen_l = 1'b0;
         usb_rden_l = 1'b0;
+        rd_data_valid = &be_in;
 
-        data_o = bidir_in;
-        o_valid = usb_rx_empty ? 4'b0 : be_in;
+        // data_o = usb_data_in;
+        // o_valid = usb_rx_empty ? 4'b0 : be_in;
 
         if (usb_rx_empty && usb_tx_full) next_state = init;
         else if (usb_rx_empty && !usb_tx_full) next_state = write;
@@ -102,12 +95,10 @@ module ft601_controller (
     if (!periph_ready) next_state = init;
   end
 
-  assign bidir_out = data_i;
-  
-  assign bidir_tri = (!usb_wren_l) ? '0 : 32'hFFFFFFFF; //if writing, do not tristate, otherise tristate
-  assign be_tri = (!usb_wren_l) ? 4'b0000 : 4'b1111;  //if writing do not tri, otherwise tri
-  assign be_out = 4'b1111; //temporary, all data is valid
-  
+  assign usb_data_tri = ~usb_outen_l; //if writing, do not tristate, otherise tristate
+  assign be_tri = ~usb_outen_l;  //if writing do not tri, otherwise tri
+  assign be_out = (~usb_wren_l) ? '1 : '0; //temporary, all data is valid
+
   assign usb_rst_l = ~rst;
 
 endmodule
