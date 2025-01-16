@@ -16,11 +16,11 @@ module reconfig_periph_wrapper (
     // peripheral address is not stored in the local FIFOs.
     input logic [usb_packet_width-periph_address_width-1:0] tx_data,
     input logic tx_empty,
-    output logic tx_read,
+    output logic tx_rden,
 
     output logic [usb_packet_width-periph_address_width-1:0] rx_data,
-    output logic rx_valid,
-    input logic rx_fifo_full,
+    output logic rx_wren,
+    input logic rx_full,
 
     output logic idle
 );
@@ -42,10 +42,10 @@ module reconfig_periph_wrapper (
   //   end
   // end
 
-  assign tx_read = ~tx_empty;
+  assign tx_rden = ~tx_empty;
   assign rx_data = tx_data;
   // assign rx_valid = rx_valid_r;
-  assign rx_valid = tx_read;
+  assign rx_wren = tx_rden;
   // FIX LATER?
-  assign idle = ~(tx_read | tx_read_valid_r | rx_valid_r);
+  assign idle = ~(tx_rden | tx_read_valid_r | rx_valid_r);
 endmodule
