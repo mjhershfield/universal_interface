@@ -31,9 +31,9 @@ module logic_analyzer_tb #(parameter int width = 16);
         rst <= 1'b0;
         
 
-    while (pin_vals != '0) begin //gives one failue when coming off reset but thats just the tb
+    while (pin_vals != '0) begin
         @(posedge clk);
-        if ((reads - 1) == pin_vals) begin
+        if (reads == pin_vals) begin
             successes++;
         end else begin
             fails++;

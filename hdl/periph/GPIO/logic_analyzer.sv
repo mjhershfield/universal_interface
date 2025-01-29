@@ -7,12 +7,12 @@ module logic_analyzer #(parameter width = 16)
     output logic [width-1:0] reads
 );
 
-always_ff @(posedge clk, posedge rst) begin
+always_comb begin
 
     if (rst) begin
-        reads <= '0;
+        reads = '0;
     end else begin
-        reads <= pin_vals;
+        reads = pin_vals;
     end
 
 end
