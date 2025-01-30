@@ -71,7 +71,7 @@ module ft601_controller (
 
       read: begin
         usb_outen_l = 1'b0;
-        usb_rden_l = 1'b0;
+        usb_rden_l = usb_rx_empty;
         rd_data_valid = &be_in;
 
         // data_o = usb_data_in;

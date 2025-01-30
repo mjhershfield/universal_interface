@@ -1,3 +1,4 @@
+
 import lycan_globals::*;
 
 module lycan (
@@ -28,7 +29,7 @@ module lycan (
   // Local signals
   logic rst;
   logic read_periph_data;
-  logic [num_peripherals-1:0]
+  (* mark_debug = "true" *) logic [num_peripherals-1:0]
       periph_tx_fulls,
       periph_rx_rdens,
       periph_rx_emptys,
@@ -36,34 +37,35 @@ module lycan (
       periph_rx_fulls,
       periph_idles,
       periph_readys;
+  // logic fifos_ready;
   logic [inputs_per_peripheral*num_peripherals-1:0] periph_ins;
   logic [outputs_per_peripheral*num_peripherals-1:0] periph_outs;
   logic [tristates_per_peripheral*num_peripherals-1:0] periph_tristates;
-  (* mark_debug = "true" *) logic [usb_packet_width-1:0] periph_tx_din;
+  // (* mark_debug = "true" *) logic [usb_packet_width-1:0] periph_tx_din;
   logic [2:0] periph_grant;
-  logic [num_peripherals-1:0] decoded_grant;
+    (* mark_debug = "true" *) logic [num_peripherals-1:0] decoded_grant;
   (* mark_debug = "true" *) logic [usb_packet_width-1:0] arbiter_out;
   logic arbiter_out_valid;
 
   logic [num_peripherals-1:0][usb_packet_width-1:0] mux_options;
 
-  logic [usb_packet_width-1:0] usb_data_in, usb_data_out, usb_data_out_r;
-  logic usb_data_tri, usb_data_tri_r;
-  logic [3:0] be_in, be_out, be_out_r;
-  logic be_tri, be_tri_r;
-  logic controller_wren, controller_rden, controller_outen, controller_rst;
+  (* mark_debug = "true" *) logic [usb_packet_width-1:0] usb_data_in, usb_data_out;
+  (* mark_debug = "true" *) logic usb_data_tri;
+  (* mark_debug = "true" *) logic [3:0] be_in, be_out;
+  (* mark_debug = "true" *) logic be_tri;
+  (* mark_debug = "true" *) logic lycan_rd, lycan_wr;
+  (* mark_debug = "true" *) logic [31:0] lycan_in, lycan_out;
+  (* mark_debug = "true" *) logic in_fifo_empty, out_fifo_empty;
+
 
   // Set voltage regulator for 2.5V
   // TODO: Do we want a separate clock domain to configure set_vadj and vadj_en sequentially after reset?
   // (cannot be the main clock domain since reset disables the FIFO clock and FIFO clock depends on VADJ power)
   assign set_vadj = 2'b10;
-  assign vadj_en  = 1'b1;
+  assign vadj_en = 1'b1;
 
   // The CPU_RST button on our dev board is active-low
   assign rst = ~rst_l;
-
-  assign usb_data_out = arbiter_out;
-  assign periph_tx_din = usb_data_in;
 
   // Instantiate FT601 controller
   ft601_controller ft601 (
@@ -71,49 +73,80 @@ module lycan (
       .rst(rst),
       .usb_tx_full(usb_tx_full),
       .usb_rx_empty(usb_rx_empty),
-      .usb_wren_l(controller_wren),
-      .usb_rden_l(controller_rden),
-      .usb_outen_l(controller_outen),
-      .usb_rst_l(controller_rst),
+      .usb_wren_l(usb_wren_l),
+      .usb_rden_l(usb_rden_l),
+      .usb_outen_l(usb_outen_l),
+      .usb_rst_l(usb_rst_l),
       .rd_data_valid(periph_tx_valid),
       .usb_data_tri(usb_data_tri),
       .be_in(be_in),
       .be_out(be_out),
       .be_tri(be_tri),
-      .periph_data_available(arbiter_out_valid),
-      .read_periph_data(read_periph_data),
+      .periph_data_available(~out_fifo_empty),
+      // .read_periph_data(read_periph_data),
       .periph_ready(&periph_readys)
   );
 
   // Tristate buffer for USB data bus
   genvar usb_bit;
-  for (usb_bit = 0; usb_bit < usb_packet_width; usb_bit++) begin: gen_usb_iobuf
-    IOBUF usb_iobuf(
-      .O(usb_data_in[usb_bit]),
-      .IO(usb_data[usb_bit]),
-      .I(usb_data_out_r[usb_bit]),
-      .T(usb_data_tri_r)
+  for (usb_bit = 0; usb_bit < usb_packet_width; usb_bit++) begin : gen_usb_iobuf
+    IOBUF usb_iobuf (
+        .O (usb_data_in[usb_bit]),
+        .IO(usb_data[usb_bit]),
+        .I (usb_data_out[usb_bit]),
+        .T (usb_data_tri)
     );
   end
 
   // Tristate buffer for byte enable bus
   genvar be_bit;
-  for (be_bit = 0; be_bit < 4; be_bit++) begin: gen_be_iobuf
-    IOBUF be_iobuf(
-      .O(be_in[be_bit]),
-      .IO(usb_be[be_bit]),
-      .I(be_out_r[be_bit]),
-      .T(be_tri_r)
+  for (be_bit = 0; be_bit < 4; be_bit++) begin : gen_be_iobuf
+    IOBUF be_iobuf (
+        .O (be_in[be_bit]),
+        .IO(usb_be[be_bit]),
+        .I (be_out[be_bit]),
+        .T (be_tri)
     );
   end
 
-  // Instantiate peripheral bus arbiter
+  // Fifo between
+  ftdi_fifo ftdi_to_lycan_fifo (
+      .clk  (clk),           // input wire clk
+      .rst  (rst),           // input wire rst
+      .din  (usb_data_in),   // input wire [31 : 0] din
+      .wr_en(~usb_rden_l & periph_tx_valid),   // input wire wr_en
+      .rd_en(lycan_rd),      // input wire rd_en
+      .dout (lycan_in),      // output wire [31 : 0] dout
+      // .full       (full),         // output wire full
+      .empty(in_fifo_empty)  // output wire empty
+      // .wr_rst_busy(wr_rst_busy),  // output wire wr_rst_busy
+      // .rd_rst_busy(rd_rst_busy)   // output wire rd_rst_busy
+  );
+
+  ftdi_fifo lycan_to_ftdi_fifo (
+      .clk  (clk),            // input wire clk
+      .rst  (rst),            // input wire rst
+    // switch to arbiter_out in the future
+      .din  (lycan_out),      // input wire [31 : 0] din
+      .wr_en(lycan_wr),       // input wire wr_en
+      .rd_en(~usb_wren_l),    // input wire rd_en
+      .dout (usb_data_out),   // output wire [31 : 0] dout
+      // .full       (full),         // output wire full
+      .empty(out_fifo_empty)  // output wire empty
+      // .wr_rst_busy(wr_rst_busy),  // output wire wr_rst_busy
+      // .rd_rst_busy(rd_rst_busy)   // output wire rd_rst_busy
+  );
+
+  assign lycan_out = arbiter_out;
+  assign lycan_wr  = arbiter_out_valid;
+  assign lycan_rd  = ~in_fifo_empty;
+
   arbiter periph_arbiter (
       .clk(clk),
       .rst(rst),
       .rx_fifo_empty(periph_rx_emptys),
       .rx_fifo_almost_full(periph_rx_almost_fulls),
-      .read_periph_data(read_periph_data),
+      // .read_periph_data(read_periph_data),
       .grant(periph_grant)
   );
 
@@ -129,17 +162,17 @@ module lycan (
 
   // MUX to output if current peripheral granted bus access has valid data
   mux #(
-    .NUM_INPUTS(num_peripherals),
-    .WIDTH_INPUTS(1)
+      .NUM_INPUTS  (num_peripherals),
+      .WIDTH_INPUTS(1)
   ) valid_mux (
-    .in(~periph_rx_emptys),
-    .sel(periph_grant),
-    .out(arbiter_out_valid)
+      .in (periph_rx_rdens),
+      .sel(periph_grant),
+      .out(arbiter_out_valid)
   );
 
   // Instantiate 8 loopback peripherals
   genvar periph_num;
-  for (periph_num = 0; periph_num < num_peripherals; periph_num++) begin: gen_peripherals
+  for (periph_num = 0; periph_num < num_peripherals; periph_num++) begin : gen_peripherals
     periph #(
         .ADDRESS(3'(periph_num))
     ) loopback (
@@ -148,8 +181,8 @@ module lycan (
         .in(periph_ins[periph_num*inputs_per_peripheral+:inputs_per_peripheral]),
         .out(periph_outs[periph_num*outputs_per_peripheral+:outputs_per_peripheral]),
         .tristate(periph_tristates[periph_num*tristates_per_peripheral+:tristates_per_peripheral]),
-        .tx_data(usb_data_in),
-        .tx_valid(periph_tx_valid),
+        .tx_data(lycan_in),
+        .tx_valid(~in_fifo_empty),
         .tx_full(periph_tx_fulls[periph_num]),
         .rx_data(mux_options[periph_num]),
         .rx_read(periph_rx_rdens[periph_num]),
@@ -162,10 +195,12 @@ module lycan (
   end
 
   // Decode grant signal to periph_rdens vector
-  decoder #(.WIDTH(8)) periph_rden_decoder (
-    .in(periph_grant),
-    .valid(read_periph_data),
-    .out(decoded_grant)
+  decoder #(
+      .WIDTH(8)
+  ) periph_rden_decoder (
+      .in(periph_grant),
+      .valid(1'b1),
+      .out(decoded_grant)
   );
 
   // Register all outputs to the FTDI
@@ -177,14 +212,14 @@ module lycan (
   //   .out({usb_data_out_r, usb_data_tri_r, be_out_r, be_tri_r, usb_wren_l, usb_rden_l, usb_outen_l, usb_rst_l})
   // );
 
-  assign usb_data_out_r = usb_data_out;
-  assign usb_data_tri_r = usb_data_tri;
-  assign be_out_r = be_out;
-  assign be_tri_r = be_tri;
-  assign usb_wren_l = controller_wren;
-  assign usb_rden_l = controller_rden;
-  assign usb_outen_l = controller_outen;
-  assign usb_rst_l = controller_rst;
+  // assign usb_data_out_r = usb_data_out;
+  // assign usb_data_tri_r = usb_data_tri;
+  // assign be_out_r = be_out;
+  // assign be_tri_r = be_tri;
+  // assign usb_wren_l = controller_wren;
+  // assign usb_rden_l = controller_rden;
+  // assign usb_outen_l = controller_outen;
+  // assign usb_rst_l = controller_rst;
 
   assign periph_rx_rdens = decoded_grant & ~periph_rx_emptys;
 

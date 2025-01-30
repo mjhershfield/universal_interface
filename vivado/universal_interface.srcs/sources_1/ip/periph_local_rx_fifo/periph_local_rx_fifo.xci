@@ -3,7 +3,7 @@
   "ip_inst": {
     "xci_name": "periph_local_rx_fifo",
     "component_reference": "xilinx.com:ip:fifo_generator:13.2",
-    "ip_revision": "8",
+    "ip_revision": "11",
     "gen_directory": "../../../../universal_interface.gen/sources_1/ip/periph_local_rx_fifo",
     "parameters": {
       "component_parameters": {
@@ -16,14 +16,14 @@
         "asymmetric_port_width": [ { "value": "false", "resolve_type": "user", "format": "bool", "enabled": false, "usage": "all" } ],
         "Input_Data_Width": [ { "value": "32", "value_src": "user", "resolve_type": "user", "format": "long", "usage": "all" } ],
         "Input_Depth": [ { "value": "256", "value_src": "user", "resolve_type": "user", "usage": "all" } ],
-        "Output_Data_Width": [ { "value": "32", "resolve_type": "user", "usage": "all" } ],
+        "Output_Data_Width": [ { "value": "32", "value_src": "user", "resolve_type": "user", "usage": "all" } ],
         "Output_Depth": [ { "value": "256", "resolve_type": "user", "format": "long", "enabled": false, "usage": "all" } ],
         "Enable_ECC": [ { "value": "false", "resolve_type": "user", "format": "bool", "usage": "all" } ],
         "Use_Embedded_Registers": [ { "value": "false", "resolve_type": "user", "format": "bool", "usage": "all" } ],
         "Reset_Pin": [ { "value": "true", "resolve_type": "user", "format": "bool", "usage": "all" } ],
         "Enable_Reset_Synchronization": [ { "value": "true", "resolve_type": "user", "format": "bool", "enabled": false, "usage": "all" } ],
         "Reset_Type": [ { "value": "Asynchronous_Reset", "value_src": "user", "resolve_type": "user", "usage": "all" } ],
-        "Full_Flags_Reset_Value": [ { "value": "1", "resolve_type": "user", "usage": "all" } ],
+        "Full_Flags_Reset_Value": [ { "value": "1", "value_src": "user", "resolve_type": "user", "usage": "all" } ],
         "Use_Dout_Reset": [ { "value": "true", "resolve_type": "user", "format": "bool", "usage": "all" } ],
         "Dout_Reset_Value": [ { "value": "0", "resolve_type": "user", "usage": "all" } ],
         "dynamic_power_saving": [ { "value": "false", "resolve_type": "user", "format": "bool", "enabled": false, "usage": "all" } ],
@@ -382,7 +382,7 @@
       },
       "project_parameters": {
         "ARCHITECTURE": [ { "value": "artix7" } ],
-        "BASE_BOARD_PART": [ { "value": "digilentinc.com:nexys_video:part0:1.2" } ],
+        "BASE_BOARD_PART": [ { "value": "" } ],
         "BOARD_CONNECTIONS": [ { "value": "" } ],
         "DEVICE": [ { "value": "xc7a200t" } ],
         "PACKAGE": [ { "value": "sbg484" } ],
@@ -395,12 +395,12 @@
       },
       "runtime_parameters": {
         "IPCONTEXT": [ { "value": "IP_Flow" } ],
-        "IPREVISION": [ { "value": "8" } ],
+        "IPREVISION": [ { "value": "11" } ],
         "MANAGED": [ { "value": "TRUE" } ],
         "OUTPUTDIR": [ { "value": "../../../../universal_interface.gen/sources_1/ip/periph_local_rx_fifo" } ],
         "SELECTEDSIMMODEL": [ { "value": "" } ],
         "SHAREDDIR": [ { "value": "." } ],
-        "SWVERSION": [ { "value": "2023.1" } ],
+        "SWVERSION": [ { "value": "2024.2" } ],
         "SYNTHESISFLOW": [ { "value": "OUT_OF_CONTEXT" } ]
       }
     },

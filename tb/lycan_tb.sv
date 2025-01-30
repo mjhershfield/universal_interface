@@ -1,4 +1,5 @@
 `timescale 1 ns / 100 ps
+import lycan_globals::*;
 
 module mock_fifo #(
     parameter int WIDTH = 32,
@@ -24,7 +25,7 @@ module mock_fifo #(
       if (rden) begin
         if (remaining_data_amt > 0) begin
           remaining_data_amt <= remaining_data_amt - 1;
-          dout_r = $urandom;
+          dout_r <= $urandom;
         end else begin
           dout_r <= 0;
         end
