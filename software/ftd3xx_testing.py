@@ -1,6 +1,8 @@
 import ftd3xx
 from ftd3xx.defines import *
 import time, sys
+import ftd3xx_functions as fifo
+import ctypes as c
 
 def str_to_num(inStr, isHex):
     res = 0
@@ -33,8 +35,8 @@ if(devices != None):
     dev = ftd3xx.create(devices[0].SerialNumber, FT_OPEN_BY_SERIAL_NUMBER)
     devInfo = dev.getDeviceInfo()
     bUSB3 = dev.getDeviceDescriptor().bcdUSB >= 0x300
-    dev.setPipeTimeout(0x02, 3000)
-    dev.setPipeTimeout(0x82, 3000)
+    dev.setPipeTimeout(0x02, 100)
+    dev.setPipeTimeout(0x82, 100)
     dev.setSuspendTimeout(0)
     # dev.setPipeTimeout(0x02, 3000)
     # dev.setPipeTimeout(0x82, 3000)
@@ -51,43 +53,30 @@ else:
 # Try to send data to the FIFO
 numBytesWritten = 0
 # numBytesWritten += send_data_packet(dev, pipe=0x02, peripheral_addr=0, data=b'ABC')
-data = 0x0C0A0B0C00110011AABBCCDD
-print(f'\nData to write: {hex(data)}\n')
+data = b'\x00\x11\x22\x33\x44\x55\x66\x77\x88\x99\xAA\xBB\xCC\xDD\xEE\xFF'
+# data = (0x0C0A0B0C00110011AABBCCDD).to_bytes(12, 'little')
+# data = (0x0C0A0B0C00110011).to_bytes(8, 'little')
+print(f'\nData to write:', data.hex())
 
 # Write
-size = 12
+size = 8
 transferred = 0
-while (transferred != size):
-    # write data to specified pipe	
-    transferred += dev.writePipe(pipe=0x02, data=data, datalen=size-transferred)
-    
-    # check status of writing data
-    status = dev.getLastError()
-    if (status != 0):
-        dev.abortPipe(0x02)
-        print(f'Error with writing. Status Code {status}')
-        break
-print(f'Wrote {transferred} bytes.\n')
+# fifo.send_raw_data(dev, data=data)
+t = dev.writePipe(0x02, data, len(data))
+print('transferred ', t, 'bytes')
 
 # Read
-size = transferred
-transferred = 0
 buffread = b''
-while(transferred != size):                    
-    # read data from specified pipe
-    output = dev.readPipeEx(pipe=0x82, datalen=(size - transferred))
-    buffread += output['bytes']
-    transferred += output['bytesTransferred']
-
-    status = dev.getLastError()
-    if (status != 0):
-        dev.abortPipe(0x82)
-        break
-print(f'Read {transferred} bytes.')
-print(buffread.hex())
+for i in range(4):
+    dbuff = c.c_buffer(len(data))
+    t = dev.readPipe(0x82, data=dbuff, datalen=4)
+    buffread += dbuff.raw[:t]
+    print(dbuff.raw[:])
+    print(dev.getLastError())
+print(f'\n Data read:', buffread.hex())
 
 # Compare write/read data
-if(data == int.from_bytes(buffread, 'big')):
+if(data == buffread):
     print('******************************   The loopback worked! Yay!   ******************************')
 else:
     print('Loopback Failed :(')

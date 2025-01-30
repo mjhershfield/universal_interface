@@ -1,5 +1,4 @@
 import sys
-import PyQt6.QtCore as QtCore
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
     QApplication, QLabel, QWidget, QLineEdit, QFormLayout, 
@@ -7,11 +6,10 @@ from PyQt6.QtWidgets import (
     QTabWidget
 )
 from PyQt6.QtGui import QIntValidator, QColor
-import pyqtgraph as pg
 import ftd3xx, threading, time, queue
 from ftd3xx.defines import *
 import ftd3xx_functions as ftdi
-from random import randint
+import random, socket
 
 # Constants #
 
@@ -25,21 +23,13 @@ turn = 'R'
 # Helper Functions #
 
 # String to number (bytes) method
-def str_to_num(inStr, format):
+def str_to_num(inStr, isHex):
     res = 0
-    # Check if the string is in binary, hex, or decimal
-    if(format=='Dec'):
-        num = int(inStr)
-
-        # TODO: Check if number is invalid
-
-        return int(inStr)
-    
-    elif(len(inStr) == 24 and format=='Bin'):
+    # Check if the string is in binary
+    if(len(inStr) == 24 and not isHex):
         for index, c in enumerate(inStr):
             res += (2**(23 - index)) * (ord(c) - 48)
         return res
-    
     else: # String is in hexadecimal
         if(len(inStr) != 6):
             return -1
@@ -53,28 +43,32 @@ def str_to_num(inStr, format):
                 return -1 # Not a proper hex string
         return res
     
-def write_to_FIFO(dev, mutex, periphAddr, isConfig, data, format='Hex'):
-    packet_num = str_to_num(data, format)
-    print(packet_num)
-    if(packet_num != -1):
+def write_to_FIFO(dev, mutex, periphAddr, isConfig, data, isHex):
+    data_num = str_to_num(data, isHex)
+    print(data_num)
+    if(data_num != -1):
         # Convert integer packet to bytes object
-        packet = packet_num.to_bytes(3, 'little')
+        data_clean = data_num.to_bytes(3, 'little')
         # Write to the FIFO
         mutex.acquire() # Acquire the I/O threading lock (blocking)
-        num_bytes_written = ftdi.send_data_packet(dev, peripheral_addr=periphAddr, data=packet)
+        # DO NOTHING
         mutex.release() # Release the threading lock
-        return packet, num_bytes_written
+        return data_clean, 4
     else:
         return None, -1
 
 # Thread for reading from FIFO (Pauses if writing)
 def read_from_FIFO(dev, GUI, mutex):
-    while(True):
+    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    host = 'localhost'
+    port = 5000
+    client_socket.connect((host, port))
+
+    while True:
         mutex.acquire() # Acquire the I/O threading lock (blocking)
-        data_in = ftdi.read_packet(dev, suppressErrors=True)[1] # Read from the FIFO
+        data_in = client_socket.recv(4) # Simulated FIFO read (over port 5000)
         mutex.release() # Release the threading lock
-        # print('Read:', data_in)
-        if(data_in != None):
+        if(len(data_in) > 0):
             # Send the read packet to the corresponding peripheral tab
             periphIndex = int.from_bytes(data_in, 'little') >> 29
             if(GUI.peripheralTabs[periphIndex]):
@@ -82,7 +76,7 @@ def read_from_FIFO(dev, GUI, mutex):
                 GUI.peripheralTabs[periphIndex].displayRXData(str(hex(int.from_bytes(data, 'little'))))
         # Tell the main thread we are sleeping
         time.sleep(0.1) # Sleep for 100 ms (CHANGE LATER???)
-    
+
 # Peripheral Tab Class #
 class PeripheralTab(QWidget):
 
@@ -93,19 +87,12 @@ class PeripheralTab(QWidget):
         self.mutex = mutex
         self.dev = dev
         self.pIndex = peripheralIndex
-        self.logFile = 0 # No log file yet
-        self.logging = False
 
         # self.setWindowTitle("Lycan Universal Interface")
         # self.setGeometry(200, 200, WINDOW_WIDTH, WINDOW_HEIGHT)
 
-    # Component Setup
-    def initComponents(self): 
-        self.logButton = QPushButton('Start Logging to File')
-        self.logButton.setStyleSheet('background-color: green;')
-        self.logButton.setFixedWidth(120)
-        self.logButton.clicked.connect(self.createLogFile)
-        
+        # Component Setup #
+
         self.rxDataLabel = QTextEdit()
         self.rxDataLabel.setReadOnly(True)
 
@@ -116,7 +103,7 @@ class PeripheralTab(QWidget):
         self.txDataField = QLineEdit()
         self.txDataField.returnPressed.connect(self.onSubmitTX)
         self.txTypeCombo = QComboBox()
-        self.txTypeCombo.addItems(['Hex', 'Bin', 'Dec'])
+        self.txTypeCombo.addItems(['Hex', 'Bin'])
         self.txSubmitButton = QPushButton('Send')
         self.txSubmitButton.clicked.connect(self.onSubmitTX)
 
@@ -137,7 +124,6 @@ class PeripheralTab(QWidget):
         txRowLayout.addWidget(self.txSubmitButton)
 
         layout = QFormLayout()
-        layout.addRow(self.logButton)
         layout.addRow('RX Data:', self.rxDataLabel)
         layout.addRow('', txConfigRowLayout)
         layout.addRow('TX Data:', txRowLayout)
@@ -147,7 +133,7 @@ class PeripheralTab(QWidget):
 
     # On request to send to FIFO
     def onSubmitTX(self):
-        res = write_to_FIFO(self.dev, self.mutex, self.pIndex, False, self.txDataField.text(), self.txTypeCombo.currentText())
+        res = write_to_FIFO(self.dev, self.mutex, self.pIndex, False, self.txDataField.text(), self.txTypeCombo.currentText()=='Hex')
         if(res[1] == -1):
             message = 'Issue with input (may have too many bytes, or formatting is wrong - use binary or hex), try again.'
             self.errorLabel.setText(message)
@@ -161,37 +147,6 @@ class PeripheralTab(QWidget):
 
     def displayRXData(self, data):
         self.rxDataLabel.append('Read: '+data+'\n')
-
-    def createLogFile(self):
-        if(not self.logging):
-            try:
-                self.logFile = open(f'p_{self.pIndex}_log_{str(int(time.time()))}.txt', 'w')
-                self.logging = True
-                self.logButton.setStyleSheet('background-color: red;')
-                self.logButton.setText('Stop Logging to File')
-            except Exception as e:
-                print(e)
-                self.errorLabel.setText('Error creating the log file!')
-        else:
-            # Close the log file (and save it)
-            try:
-                self.rxDataLabel.append('Log data saved to file: ' + self.logFile.name + '\n')
-                self.logFile.close()
-                self.logging = False
-                self.logButton.setStyleSheet('background-color: green;')
-                self.logButton.setText('Start Logging to File')
-            except Exception as e:
-                print(e)
-                self.errorLabel.setText('Error saving/closing the log file!')
-
-    def logData(self, logfile, data, isRX):
-        timestamp = str(time.time())
-        if(isRX and self.logging):
-            try:
-                self.logFile.write(f'{timestamp}:\t{str(data)}\n')
-            except Exception as e:
-                print(e)
-                self.errorLabel.setText('Error writing to log file!')
 
 # Main Window Class #
 class LycanWindow(QTabWidget):
@@ -207,10 +162,9 @@ class LycanWindow(QTabWidget):
         self.setGeometry(200, 200, WINDOW_WIDTH, WINDOW_HEIGHT)
 
         # Tab Setup #
-        self.peripheralTabs = [0]*numPeripherals
-        for i in range(0, numPeripherals):
-            self.peripheralTabs[i] = PeripheralTab(threadQueue, dev, i)
-            self.peripheralTabs[i].initComponents()
+        self.peripheralTabs = []
+        for i in range(numPeripherals):
+            self.peripheralTabs += [PeripheralTab(threadQueue, dev, i)]
             self.addTab(self.peripheralTabs[i], f'Peripheral {i}')
             print(f'Added Periph Tab #{i}')
 
@@ -224,29 +178,8 @@ class LycanWindow(QTabWidget):
 # Main #
 if __name__ == '__main__':
 
-    # Create a queue for message passing between main thread and RX thread
-    threadQueue = queue.Queue(maxsize=1)
-    threadQueue.put(True)
-
     # Get the connected FTDI device
-    numDevices = ftd3xx.createDeviceInfoList()
-    devices = ftd3xx.getDeviceInfoList()
-    if(devices != None):
-        # Create a ftd3xx device instance
-        dev = ftd3xx.create(devices[0].SerialNumber, FT_OPEN_BY_SERIAL_NUMBER)
-        devInfo = dev.getDeviceInfo()
-        dev.setPipeTimeout(0x02, 500)
-        dev.setPipeTimeout(0x82, 500)
-        dev.setSuspendTimeout(0)
-        # Print some info about the device
-        print('\nDevice Info:')
-        print(f'\tType: {devInfo["Type"]}')
-        print(f'\tID: {devInfo["ID"]}')
-        print(f'\tDescr.: {devInfo["Description"]}')
-        print(f'\tSerial Num: {devInfo["Serial"]}')
-    else:
-        message = 'Error: No devices detected. Exiting...'
-        sys.exit()
+    dev = 0
 
     mutex = threading.Lock()
 
