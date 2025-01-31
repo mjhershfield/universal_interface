@@ -4,7 +4,7 @@
 a = Analysis(
     ['gui.py'],
     pathex=[],
-    binaries=[('C:/Users/selfb/Documents/venvs/lycan/Lib/site-packages/ftd3xx/ftd3xx.dll', '.')],
+    binaries=[('C:\\Users\\selfb\\Documents\\venvs\\lycan\\Lib\\site-packages\\ftd3xx\\FTD3XX.dll', '.')],
     datas=[],
     hiddenimports=[],
     hookspath=[],
@@ -29,7 +29,7 @@ exe = EXE(
     upx=True,
     upx_exclude=[],
     runtime_tmpdir=None,
-    console=False,
+    console=True,
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,

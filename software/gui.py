@@ -54,16 +54,16 @@ def str_to_num(inStr, format):
         return res
     
 def write_to_FIFO(dev, mutex, periphAddr, isConfig, data, format='Hex'):
-    packet_num = str_to_num(data, format)
-    print(packet_num)
-    if(packet_num != -1):
+    data_num = str_to_num(data, format)
+    # print(data_num)
+    if(data_num != -1):
         # Convert integer packet to bytes object
-        packet = packet_num.to_bytes(3, 'little')
+        data_b = data_num.to_bytes(3, 'little')
         # Write to the FIFO
         mutex.acquire() # Acquire the I/O threading lock (blocking)
-        num_bytes_written = ftdi.send_data_packet(dev, peripheral_addr=periphAddr, data=packet)
+        num_bytes_written = ftdi.send_data_packet(dev, peripheral_addr=periphAddr, data=data_b)
         mutex.release() # Release the threading lock
-        return packet, num_bytes_written
+        return data_b, num_bytes_written
     else:
         return None, -1
 
@@ -158,9 +158,11 @@ class PeripheralTab(QWidget):
             self.errorLabel.setText('') # Reset the error text box
             # self.txDataField.setText('') # Reset the TX field text
             self.rxDataLabel.append(f'\tWrote {res[1]} bytes to the FIFO.\n')
+            self.logData(res[0], )
 
     def displayRXData(self, data):
         self.rxDataLabel.append('Read: '+data+'\n')
+        self.logData(data, True)
 
     def createLogFile(self):
         if(not self.logging):
@@ -184,11 +186,12 @@ class PeripheralTab(QWidget):
                 print(e)
                 self.errorLabel.setText('Error saving/closing the log file!')
 
-    def logData(self, logfile, data, isRX):
+    def logData(self, data, isRX):
         timestamp = str(time.time())
-        if(isRX and self.logging):
+        if(self.logging):
             try:
-                self.logFile.write(f'{timestamp}:\t{str(data)}\n')
+                if(isRX):
+                    self.logFile.write(f'{timestamp}:\t{str(data)}\n')
             except Exception as e:
                 print(e)
                 self.errorLabel.setText('Error writing to log file!')
