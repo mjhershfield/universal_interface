@@ -85,3 +85,36 @@
 
 ## 11/29/24
 - Matthew S: Research Python packaging using pyinstaller, make the GUI and .exe for Windows (2 hrs)
+
+## 12/27/24
+- Matthew S: Worked on cleaning up the Python code-base, standardized endianness of packets in SW (3 hrs)
+
+## 1/14/25
+- All: Meet to discuss upcoming semester, create Github Projects tasks (1 hr)
+
+## 1/16/25
+- All: Work on Lycan hardware (UART peripheral) and software (fix lock-up on GUI) (2 hrs)
+- Matthew S: Create thread-safe mutex structure for GUI multithread reads (2 hrs)
+
+## 1/21/25
+- All: Work on hardware (UART peripheral), integration, and software (lost packets) (2 hrs)
+- Matthew H: Debug the FPGA datapath for packet dropping issue (1 hr)
+- Matthew S: Contact FTDI and debug the software to see why every other packet is being lost (1 hr)
+
+## 1/23/25
+- All: Meet to work on hardware and software (1 hr)
+
+## 1/25/25
+- Matthew S: Work on simulated FTDI python script for testing GUI without FPGA (2 hrs)
+
+## 1/28/25
+- All: Instructor and Stakeholder meetings (30 min)
+- All: Discuss future plans and get updated on current progress (30 min)
+- Matthew S: Begin PCB schematic, research feasibility/costs (1 hr)
+
+## 1/30/25
+- Matthew S: Work on software (GUI logger feature) (2 hrs)
+- Matthew S: Work on Alpha Report and Test Plan (1 hr)
+
+## 1/31/25
+- All: Finish Alpha Build Report and Test Plan (_ hrs)
