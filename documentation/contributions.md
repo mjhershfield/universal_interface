@@ -95,6 +95,7 @@
 ## 1/16/25
 - All: Work on Lycan hardware (UART peripheral) and software (fix lock-up on GUI) (2 hrs)
 - Matthew S: Create thread-safe mutex structure for GUI multithread reads (2 hrs)
+- Adam and Matthew H: Refactor and testbench UART RX module to enable different configurations (2 hrs)
 
 ## 1/21/25
 - All: Work on hardware (UART peripheral), integration, and software (lost packets) (2 hrs)
@@ -103,6 +104,7 @@
 
 ## 1/23/25
 - All: Meet to work on hardware and software (1 hr)
+- Adam: Work on UART tx module and design specifications for packet error handling (1 hr)
 
 ## 1/25/25
 - Matthew S: Work on simulated FTDI python script for testing GUI without FPGA (2 hrs)
@@ -111,10 +113,15 @@
 - All: Instructor and Stakeholder meetings (30 min)
 - All: Discuss future plans and get updated on current progress (30 min)
 - Matthew S: Begin PCB schematic, research feasibility/costs (1 hr)
+- Adam: Work on debugging Vivado simulation issue causing system deadlock to occur (3 hrs)
+
+## 1/29/25
+- Adam: Work on testbenching and debugging UART tx across different input waveforms (3 hrs)
 
 ## 1/30/25
 - Matthew S: Work on software (GUI logger feature) (2 hrs)
 - Matthew S: Work on Alpha Report and Test Plan (1 hr)
+- Adam and Matthew H: Work on integrating UART module into rest of system and initial testbenching (2 hrs)
 
 ## 1/31/25
 - All: Finish Alpha Build Report and Test Plan (_ hrs)
