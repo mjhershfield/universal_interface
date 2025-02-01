@@ -86,8 +86,23 @@
 ## 11/29/24
 - Matthew S: Research Python packaging using pyinstaller, make the GUI and .exe for Windows (2 hrs)
 
+## 12/16/24
+- Matthew H: Prototype a Rust program for interacting with Lycan (4 hrs)
+
+## 12/22/24
+- Matthew H: Test different strategies for meeting timing constraints of FT601: adding registers, adjusting clock freq (3 hrs)
+
 ## 12/27/24
 - Matthew S: Worked on cleaning up the Python code-base, standardized endianness of packets in SW (3 hrs)
+
+## 1/3/25
+- Matthew H: Added a layer of FIFOs between Lycan and the FT601, locked P&R to eliminate metastability (3 hrs)
+
+## 1/4/25
+- Matthew H: Solved issue where a peripheral sent 50+ copies of the first byte it received from the host. (1 hr)
+
+## 1/6/25
+- Matthew H: Identified problem of an undersized read buffer causing dropped packets, tested software mitigations (2 hrs)
 
 ## 1/14/25
 - All: Meet to discuss upcoming semester, create Github Projects tasks (1 hr)
