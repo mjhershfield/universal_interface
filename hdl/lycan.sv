@@ -57,6 +57,8 @@ module lycan (
   (* mark_debug = "true" *) logic [31:0] lycan_in, lycan_out;
   (* mark_debug = "true" *) logic in_fifo_empty, out_fifo_empty;
 
+    localparam periph_type_t periph_list [8] = {PERIPH_UART, PERIPH_LOOPBACK, PERIPH_LOOPBACK, 
+        PERIPH_LOOPBACK, PERIPH_LOOPBACK, PERIPH_LOOPBACK, PERIPH_LOOPBACK, PERIPH_LOOPBACK};
 
   // Set voltage regulator for 2.5V
   // TODO: Do we want a separate clock domain to configure set_vadj and vadj_en sequentially after reset?
@@ -174,8 +176,9 @@ module lycan (
   genvar periph_num;
   for (periph_num = 0; periph_num < num_peripherals; periph_num++) begin : gen_peripherals
     periph #(
-        .ADDRESS(3'(periph_num))
-    ) loopback (
+        .ADDRESS(3'(periph_num)),
+        .PERIPH_TYPE(periph_list[periph_num])
+    ) peripheral (
         .clk(clk),
         .rst(rst),
         .in(periph_ins[periph_num*inputs_per_peripheral+:inputs_per_peripheral]),
