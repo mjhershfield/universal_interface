@@ -2,7 +2,8 @@
 import lycan_globals::*;
 
 module periph #(
-    parameter logic [periph_address_width-1:0] ADDRESS
+    parameter logic [periph_address_width-1:0] ADDRESS,
+    parameter periph_type_t PERIPH_TYPE
 ) (
     input logic clk,
     input logic rst,
@@ -81,27 +82,6 @@ module periph #(
       .rd_rst_busy(rx_fifo_rd_rst_busy)
   );
 
-  // Instantiate reconfig_periph_wrapper
-  // TODO: need to account for FIFO read latency of 1 cycle
-  // TODO: change FIFO widths to 29 bits? (stripping address)
-
-//   assign rx_fifo_din[usb_packet_width-1:usb_packet_width-periph_address_width] = ADDRESS;
-
-  reconfig_periph_wrapper reconfig_periph (
-      .clk(clk),
-      .rst(rst),
-      .in(in),
-      .out(out),
-      .tristate(tristate),
-      .tx_data(tx_fifo_dout[usb_packet_width-periph_address_width-1:0]),
-      .tx_empty(tx_fifo_empty),
-      .tx_rden(tx_fifo_rden),
-      .rx_data(rx_fifo_din),
-      .rx_wren(rx_fifo_wren),
-      .rx_full(rx_fifo_full),
-      .idle(idle)
-  );
-
   // Connect FIFOs to top-level signals
   assign tx_fifo_din = tx_data;
   assign tx_fifo_wren = tx_valid & (tx_data[usb_packet_width-1:usb_packet_width-periph_address_width] == ADDRESS);
@@ -123,4 +103,45 @@ module periph #(
   end
 
   assign ready = (reset_counter == '1);
+
+  generate
+    // Instantiate correct peripheral type
+    case (PERIPH_TYPE)
+      PERIPH_LOOPBACK: begin : gen_loopback
+        // Instantiate reconfig_periph_wrapper
+        reconfig_periph_wrapper reconfig_periph (
+            .clk(clk),
+            .rst(rst),
+            .in(in),
+            .out(out),
+            .tristate(tristate),
+            .tx_data(tx_fifo_dout[usb_packet_width-periph_address_width-1:0]),
+            .tx_empty(tx_fifo_empty),
+            .tx_rden(tx_fifo_rden),
+            .rx_data(rx_fifo_din),
+            .rx_wren(rx_fifo_wren),
+            .rx_full(rx_fifo_full),
+            .idle(idle)
+        );
+      end
+
+      PERIPH_UART: begin : gen_uart
+        uart uart_periph (
+            .clk(clk),
+            .rst(rst),
+            .in(in),
+            .out(out),
+            .tristate(tristate),
+            .tx_data(tx_fifo_dout[usb_packet_width-periph_address_width-1:0]),
+            .tx_empty(tx_fifo_empty),
+            .tx_rden(tx_fifo_rden),
+            .rx_data(rx_fifo_din),
+            .rx_wren(rx_fifo_wren),
+            .rx_full(rx_fifo_full),
+            .idle(idle)
+        );
+      end
+    endcase
+  endgenerate
+
 endmodule

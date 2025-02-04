@@ -20,12 +20,16 @@ module mock_fifo #(
   always @(posedge clk or posedge rst) begin
     if (rst) begin
       dout_r <= $urandom;
+      dout_r[31:29] <= 3'b0;
+      dout_r[27:26] <= 2'b11;
       remaining_data_amt <= INITIAL_FILLED;
     end else begin
       if (rden) begin
         if (remaining_data_amt > 0) begin
           remaining_data_amt <= remaining_data_amt - 1;
           dout_r <= $urandom;
+          dout_r[31:29] <= 3'b0;
+          dout_r[27:26] <= 2'b11;
         end else begin
           dout_r <= 0;
         end
