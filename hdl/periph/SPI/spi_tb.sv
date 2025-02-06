@@ -1,4 +1,4 @@
-`timescale 1ns/1ps
+`timescale 1 ns / 100 ps
 
 module spi_tb;
 
@@ -24,7 +24,7 @@ module spi_tb;
     //clock divider count for master SCLK generation
     logic [7:0] sclk_div_count = 8'd4;
 
-    // Instantiate SPI Master
+    //instantiate SPI Master
     spi_master #(
         .WIDTH(WIDTH)
     ) master (
@@ -41,7 +41,7 @@ module spi_tb;
         .rx_valid(master_rx_valid)
     );
 
-    // Instantiate SPI Slave
+    //instantiate SPI Slave
     spi_slave #(
         .WIDTH(WIDTH)
     ) slave (
@@ -89,8 +89,6 @@ module spi_tb;
 
 
         wait(slave_rx_valid);
-
-        //check data
         if (master_rx_data == slave_tx_data) begin
             $display("TEST PASSED: Master received correct data from Slave: %h", master_rx_data);
         end else begin
