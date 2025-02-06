@@ -144,7 +144,7 @@ This protocol was designed to allow interleaving packets from different peripher
 |Name|Bit field|Notes|
 |-|-|-|
 |Peripheral Address|31-29|Ranges from 0-7|
-|Configuration Flag|28|0 = data for tx/rx|
+|Configuration Flag|28|1 = data for config|
 |Read/Write|27|0=read, 1=write|
 |Configuration register address|26-24|Peripheral dependent?|
 |New value of register|23-0|ignored for reads. bottom bits of this field are used|

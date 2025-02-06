@@ -2,12 +2,25 @@ import ftd3xx
 from ftd3xx.defines import *
 import time
 
-def send_raw_data(device, pipe=0x02, data=b'ABCD', suppressErrors=False):
+def write_raw_bytes(device, pipe=0x02, raw=b'ABCD', suppressErrors=False):
+    """
+    Summary:
+        Sends bytes to the FT601 device using the writePipe call until an error (eg. timeout) occurs or all bytes are transferred.
+
+    Args:
+        device: FT601 FTD3XX Instance
+        pipe (int, optional): Pipe of the FT601 to write to. Defaults to 0x02.
+        raw (bytes, optional): Bytes to write. Defaults to b'ABCD'.
+        suppressErrors (bool, optional): Option to suppress errors from being printed. Defaults to False.
+
+    Returns:
+        int: number of successfully transferred bytes
+    """
     # Transmit the data
     transferred = 0
-    while(transferred != len(data)):
+    while(transferred != len(raw)):
         # write data to specified pipe	
-        transferred += device.writePipe(pipe=pipe, data=data, datalen=len(data)-transferred)
+        transferred += device.writePipe(pipe=pipe, data=raw, datalen=len(raw)-transferred)
         # check status of writing data
         status = device.getLastError()
         if(status != 0):
@@ -18,7 +31,20 @@ def send_raw_data(device, pipe=0x02, data=b'ABCD', suppressErrors=False):
     # Return number of bytes written
     return transferred
 
-def read_raw_data(device, pipe=0x82, length=4, suppressErrors=False):
+def read_raw_bytes(device, pipe=0x82, length=4, suppressErrors=False):
+    """
+    Summary:
+        Reads bytes from the FT601 device using the readPipeEx call until an error (eg. timeout) occurs or 'length' bytes are transferred.
+
+    Args:
+        device: FT601 FTD3XX Instance
+        pipe (int, optional): Pipe of the FT601 to read from. Defaults to 0x82.
+        length (int, optional): Number of bytes to read. Defaults to 4 (one lycan packet).
+        suppressErrors (bool, optional): Option to suppress errors from being printed. Defaults to False.
+
+    Returns:
+        bytes: Bytes object of the read bytes
+    """
     transferred = 0
     buffread = b''
     while(transferred != length):                    
@@ -35,7 +61,18 @@ def read_raw_data(device, pipe=0x82, length=4, suppressErrors=False):
         transferred += output['bytesTransferred']
     return buffread
 
-def construct_data_packet(pipe=0x02, peripheral_addr=0, data=b'ABC', suppressErrors=False):
+def construct_data_packet(peripheral_addr=0, data=b'ABC'):
+    """
+    Summary:
+        Constructs a Lycan data packet (defined in the Github documentation). Does not actually read/write anything.
+
+    Args:
+        peripheral_addr (int, optional): Peripheral to construct the data packet for (0-7). Defaults to 0.
+        data (bytes, optional): 3 bytes of data to write. Defaults to b'ABC'.
+
+    Returns:
+        bytes: Little-endian bytes object of the constructed packet (4 bytes)
+    """
     # Check that data is 3 bytes or less
     datalen = len(data)
     if(datalen > 3):
@@ -53,21 +90,58 @@ def construct_data_packet(pipe=0x02, peripheral_addr=0, data=b'ABC', suppressErr
     packet += int.from_bytes(data, byteorder='little')
     return packet.to_bytes(4, 'little')
 
-def send_data_packet(device, pipe=0x02, peripheral_addr=0, data=b'ABC', suppressErrors=False):
-    packet = construct_data_packet(pipe, peripheral_addr, data, suppressErrors)
-    return send_raw_data(device=device, pipe=pipe, data=packet, suppressErrors=suppressErrors)
+def write_data_packet(device, pipe=0x02, peripheral_addr=0, data=b'ABC', suppressErrors=False):
+    """
+    Summary:
+        Writes a Lycan data packet to the FT601 device. Uses construct_data_packet and write_raw_bytes to do so.
 
-def send_data(device, pipe=0x02, peripheral_addr=0, data=b'ABC'):
+    Args:
+        device: FT601 FTD3XX Instance
+        pipe (int, optional): Pipe of the FT601 to write to. Defaults to 0x02.
+        peripheral_addr (int, optional): Peripheral to construct the data packet for (0-7). Defaults to 0.
+        data (bytes, optional): Bytes object of length <=3 to include in the data packet
+        suppressErrors (bool, optional): Option to suppress errors from being printed. Defaults to False.
+
+    Returns:
+        int: Number of raw bytes transferred (4 = Success)
+    """
+    packet = construct_data_packet(pipe, peripheral_addr, data, suppressErrors)
+    return write_raw_bytes(device=device, pipe=pipe, raw=packet, suppressErrors=suppressErrors)
+
+def write_data(device, pipe=0x02, peripheral_addr=0, data=b'ABC', suppressErrors=False):
+    """
+    Summary:
+        Writes multiple Lycan data packets to the FT601 device. Uses write_data_packet to do so.
+
+    Args:
+        device: FT601 FTD3XX Instance
+        pipe (int, optional): Pipe of the FT601 to write to. Defaults to 0x02.
+        peripheral_addr (int, optional): Peripheral to construct the data packet for (0-7). Defaults to 0.
+        data (bytes, optional): Bytes object of length >=3 to include in the data packet(s)
+        suppressErrors (bool, optional): Option to suppress errors from being printed. Defaults to False.
+    """
     # For every 3 bytes of data, send a packet
     while(len(data) >= 3):
-        send_data_packet(device, pipe, peripheral_addr, data[0:3])
+        write_data_packet(device, pipe, peripheral_addr, data[0:3], suppressErrors=suppressErrors)
         data = data[3:]
     # Send the rest of the data
     if(len(data) > 0):
-        send_data_packet(device, pipe, peripheral_addr, data)
+        write_data_packet(device, pipe, peripheral_addr, data, suppressErrors=suppressErrors)
 
 def read_packet(device, pipe=0x82, suppressErrors=False):
-    buffread = read_raw_data(device, pipe, length=4, suppressErrors=suppressErrors)
+    """
+    Summary:
+        Reads a Lycan packet (data or config type) from the FT601 device using read_raw_bytes.
+
+    Args:
+        device: FT601 FTD3XX Instance
+        pipe (int, optional): Pipe of the FT601 to read from. Defaults to 0x82.
+        suppressErrors (bool, optional): Option to suppress errors from being printed. Defaults to False.
+
+    Returns:
+        [bool, bytes|None]: [True if read packet is a config packet, Packet read from Lycan or None if read failed]
+    """
+    buffread = read_raw_bytes(device, pipe, length=4, suppressErrors=suppressErrors)
     if(len(buffread) > 0):
         # Check if the read packet is a configuration packet response (coming from Lycan)
         is_config = buffread[0] & 0b00010000
@@ -76,7 +150,22 @@ def read_packet(device, pipe=0x82, suppressErrors=False):
     else:
         return False, None
 
-def write_config_reg(device, pipe=0x02, peripheral_addr=0, reg_addr=0, reg_val=0):
+def write_config_command(device, pipe=0x02, peripheral_addr=0, write=True, reg_addr=0, reg_val=0):
+    """
+    Summary:
+        Writes a Lycan configuration packet (read register or write to register) to the FT601 device. Uses write_raw_bytes.
+
+    Args:
+        device: FT601 FTD3XX Instance
+        pipe (int, optional): Pipe of the FT601 to write to. Defaults to 0x02.
+        peripheral_addr (int, optional): Peripheral to construct the configuration packet for (0-7). Defaults to 0.
+        write (bool, optional): Whether the configuration packet is a write packet (meaning changing a Lycan peripheral config register). Defaults to True (write register).
+        reg_addr (int, optional): Address of the config register to read or write. Defaults to 0.
+        reg_val (int, optional): If the command is a write, the value to write to the config register. Defaults to 0.
+
+    Returns:
+        int: Number of raw bytes transferred (4 = Success, None = Error)
+    """
     # Check that register address is 3 bits
     if(reg_addr < 0 or reg_addr > 7):
         print('Error: Register address is out of range (0 to 7)')
@@ -92,32 +181,9 @@ def write_config_reg(device, pipe=0x02, peripheral_addr=0, reg_addr=0, reg_val=0
     # Construct the packet
     packet = peripheral_addr << 32 # address
     packet += 1 << 29 # config flag bit
-    packet += 1 << 28 # read/write bit
+    packet += write << 28 # read/write bit
     packet += reg_addr << 27
     packet += reg_val
     # Transmit the packet
-    numBytesTransferred = send_raw_data(device=device, pipe=pipe, data=packet.to_bytes(4, 'little'))
+    numBytesTransferred = write_raw_bytes(device=device, pipe=pipe, raw=packet.to_bytes(4, 'little'))
     return numBytesTransferred
-
-def read_config_reg(device, rx_pipe=0x82, tx_pipe=0x02, peripheral_addr=0, reg_addr=0):
-    # Check that register address is 3 bits
-    if(reg_addr < 0 or reg_addr > 7):
-        print('Error: Register address is out of range (0 to 7)')
-        return None
-    # Check that the peripheral address is within the correct range
-    if(peripheral_addr < 0 or peripheral_addr > 7):
-        print('Error: The peripheral address is out of range (0 to 7)')
-        return None
-    # Construct the packet
-    packet = peripheral_addr << 32 # address
-    packet += 1 << 29 # config flag bit
-    packet += 0 << 28 # read/write bit
-    packet += reg_addr << 27
-    # Transmit the packet
-    send_raw_data(device=device, pipe=tx_pipe, data=packet.to_bytes(4, 'little'))
-    # Receive the response
-    isConfig, result = read_packet(device, rx_pipe)
-    if(isConfig and len(result) != 0):
-        # Parse the register value (bottom 3 bytes)
-        reg_val = result['bytes'][1:]
-        return reg_val
