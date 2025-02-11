@@ -22,7 +22,7 @@ module uart (
     output logic idle
 );
 
-  logic uart_tx_clk, uart_tx_busy, uart_tx_empty, uart_tx_rden;
+  logic uart_tx_clk, uart_tx_busy, uart_tx_rden;
   logic [7:0] uart_tx_data;
   logic tx_split_wren, tx_split_rden, tx_split_valid;
 
@@ -43,7 +43,8 @@ module uart (
       .clk(clk),
       .rst(rst),
       .div_clk(uart_tx_clk),
-      .max_count(24'd434)
+      .max_count(24'd5208)
+      // .max_count(24'd1)
   );
 
   uart_reg24to8 tx_splitter (
@@ -63,7 +64,7 @@ module uart (
       .clk_rd (clk),
       .rst_rd (rst),
       .start  (uart_tx_rden),
-      .read_it(tx_split_rden),
+      .read_it(tx_split_rden)
       // too lazy to implement... shouldn't be needed
       // .done()
   );

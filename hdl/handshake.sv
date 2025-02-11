@@ -37,7 +37,7 @@ module handshake (
   assign done = t2p_src_r ^ sync2_src_r;
 
   // READ/DST DOMAIN
-  always_ff @(posedge clk or posedge rst_rd) begin
+  always_ff @(posedge clk_rd or posedge rst_rd) begin
     if (rst_rd) begin
       p2t_dst_r <= 1'b0;
       sync1_dst_r <= 1'b0;
@@ -48,7 +48,7 @@ module handshake (
       p2t_dst_r <= read_it ? ~p2t_dst_r : p2t_dst_r;
       // Dual flop synchronizer
       sync1_dst_r <= p2t_src_r;
-      sync2_dst_r <= sync2_dst_r;
+      sync2_dst_r <= sync1_dst_r;
       // Toggle to pulse circuit
       t2p_dst_r <= sync2_dst_r;
     end

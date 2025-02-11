@@ -13,7 +13,7 @@ module clk_div #(
 
 logic [width-1:0] count = max_count;
 
-always_ff @( posedge clk, posedge rst, posedge max_count ) begin
+always_ff @( posedge clk, posedge rst ) begin
     if (rst) begin
         div_clk <= 1'b0;
         count <= '0;

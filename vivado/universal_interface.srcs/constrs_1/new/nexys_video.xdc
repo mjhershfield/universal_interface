@@ -106,25 +106,25 @@ set_property -dict {PACKAGE_PIN G4 IOSTANDARD LVCMOS15} [get_ports rst_l]
 
 
 ## Pmod header JA
-#set_property -dict { PACKAGE_PIN AB22  IOSTANDARD LVCMOS33 } [get_ports { dut_pins[0] }]; #IO_L10N_T1_D15_14 Sch=ja[1]
-#set_property -dict { PACKAGE_PIN AB21  IOSTANDARD LVCMOS33 } [get_ports { dut_pins[1] }]; #IO_L10P_T1_D14_14 Sch=ja[2]
-#set_property -dict { PACKAGE_PIN AB20  IOSTANDARD LVCMOS33 } [get_ports { dut_pins[2] }]; #IO_L15N_T2_DQS_DOUT_CSO_B_14 Sch=ja[3]
-#set_property -dict { PACKAGE_PIN AB18  IOSTANDARD LVCMOS33 } [get_ports { dut_pins[3] }]; #IO_L17N_T2_A13_D29_14 Sch=ja[4]
-#set_property -dict { PACKAGE_PIN Y21   IOSTANDARD LVCMOS33 } [get_ports { dut_pins[4] }]; #IO_L9P_T1_DQS_14 Sch=ja[7]
-#set_property -dict { PACKAGE_PIN AA21  IOSTANDARD LVCMOS33 } [get_ports { dut_pins[5] }]; #IO_L8N_T1_D12_14 Sch=ja[8]
-#set_property -dict { PACKAGE_PIN AA20  IOSTANDARD LVCMOS33 } [get_ports { dut_pins[6] }]; #IO_L8P_T1_D11_14 Sch=ja[9]
-#set_property -dict { PACKAGE_PIN AA18  IOSTANDARD LVCMOS33 } [get_ports { dut_pins[7] }]; #IO_L17P_T2_A14_D30_14 Sch=ja[10]
+set_property -dict {PACKAGE_PIN AB22 IOSTANDARD LVCMOS33} [get_ports {dut_pins[0]}]
+set_property -dict {PACKAGE_PIN AB21 IOSTANDARD LVCMOS33} [get_ports {dut_pins[1]}]
+set_property -dict {PACKAGE_PIN AB20 IOSTANDARD LVCMOS33} [get_ports {dut_pins[2]}]
+set_property -dict {PACKAGE_PIN AB18 IOSTANDARD LVCMOS33} [get_ports {dut_pins[3]}]
+set_property -dict {PACKAGE_PIN Y21 IOSTANDARD LVCMOS33} [get_ports {dut_pins[4]}]
+set_property -dict {PACKAGE_PIN AA21 IOSTANDARD LVCMOS33} [get_ports {dut_pins[5]}]
+set_property -dict {PACKAGE_PIN AA20 IOSTANDARD LVCMOS33} [get_ports {dut_pins[6]}]
+set_property -dict {PACKAGE_PIN AA18 IOSTANDARD LVCMOS33} [get_ports {dut_pins[7]}]
 
 
 ## Pmod header JB
-#set_property -dict { PACKAGE_PIN V9    IOSTANDARD LVCMOS33 } [get_ports { jb[0] }]; #IO_L21P_T3_DQS_34 Sch=jb_p[1]
-#set_property -dict { PACKAGE_PIN V8    IOSTANDARD LVCMOS33 } [get_ports { jb[1] }]; #IO_L21N_T3_DQS_34 Sch=jb_n[1]
-#set_property -dict { PACKAGE_PIN V7    IOSTANDARD LVCMOS33 } [get_ports { jb[2] }]; #IO_L19P_T3_34 Sch=jb_p[2]
-#set_property -dict { PACKAGE_PIN W7    IOSTANDARD LVCMOS33 } [get_ports { jb[3] }]; #IO_L19N_T3_VREF_34 Sch=jb_n[2]
-#set_property -dict { PACKAGE_PIN W9    IOSTANDARD LVCMOS33 } [get_ports { jb[4] }]; #IO_L24P_T3_34 Sch=jb_p[3]
-#set_property -dict { PACKAGE_PIN Y9    IOSTANDARD LVCMOS33 } [get_ports { jb[5] }]; #IO_L24N_T3_34 Sch=jb_n[3]
-#set_property -dict { PACKAGE_PIN Y8    IOSTANDARD LVCMOS33 } [get_ports { jb[6] }]; #IO_L23P_T3_34 Sch=jb_p[4]
-#set_property -dict { PACKAGE_PIN Y7    IOSTANDARD LVCMOS33 } [get_ports { jb[7] }]; #IO_L23N_T3_34 Sch=jb_n[4]
+set_property -dict {PACKAGE_PIN V9 IOSTANDARD LVCMOS33} [get_ports {dut_pins[8]}]
+set_property -dict {PACKAGE_PIN V8 IOSTANDARD LVCMOS33} [get_ports {dut_pins[9]}]
+set_property -dict {PACKAGE_PIN V7 IOSTANDARD LVCMOS33} [get_ports {dut_pins[10]}]
+set_property -dict {PACKAGE_PIN W7 IOSTANDARD LVCMOS33} [get_ports {dut_pins[11]}]
+set_property -dict {PACKAGE_PIN W9 IOSTANDARD LVCMOS33} [get_ports {dut_pins[12]}]
+set_property -dict {PACKAGE_PIN Y9 IOSTANDARD LVCMOS33} [get_ports {dut_pins[13]}]
+set_property -dict {PACKAGE_PIN Y8 IOSTANDARD LVCMOS33} [get_ports {dut_pins[14]}]
+set_property -dict {PACKAGE_PIN Y7 IOSTANDARD LVCMOS33} [get_ports {dut_pins[15]}]
 
 
 ## Pmod header JC
@@ -337,127 +337,3 @@ set_output_delay -clock ftdi_clk_pin -min 4.800 [get_ports usb_rst_l]
 ## Configuration options, can be used for all designs
 set_property CONFIG_VOLTAGE 3.3 [current_design]
 set_property CFGBVS VCCO [current_design]
-
-
-create_debug_core u_ila_0 ila
-set_property ALL_PROBE_SAME_MU true [get_debug_cores u_ila_0]
-set_property ALL_PROBE_SAME_MU_CNT 1 [get_debug_cores u_ila_0]
-set_property C_ADV_TRIGGER false [get_debug_cores u_ila_0]
-set_property C_DATA_DEPTH 4096 [get_debug_cores u_ila_0]
-set_property C_EN_STRG_QUAL false [get_debug_cores u_ila_0]
-set_property C_INPUT_PIPE_STAGES 0 [get_debug_cores u_ila_0]
-set_property C_TRIGIN_EN false [get_debug_cores u_ila_0]
-set_property C_TRIGOUT_EN false [get_debug_cores u_ila_0]
-set_property port_width 1 [get_debug_ports u_ila_0/clk]
-connect_debug_port u_ila_0/clk [get_nets [list clk_IBUF_BUFG]]
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe0]
-set_property port_width 32 [get_debug_ports u_ila_0/probe0]
-connect_debug_port u_ila_0/probe0 [get_nets [list {usb_data_out[0]} {usb_data_out[1]} {usb_data_out[2]} {usb_data_out[3]} {usb_data_out[4]} {usb_data_out[5]} {usb_data_out[6]} {usb_data_out[7]} {usb_data_out[8]} {usb_data_out[9]} {usb_data_out[10]} {usb_data_out[11]} {usb_data_out[12]} {usb_data_out[13]} {usb_data_out[14]} {usb_data_out[15]} {usb_data_out[16]} {usb_data_out[17]} {usb_data_out[18]} {usb_data_out[19]} {usb_data_out[20]} {usb_data_out[21]} {usb_data_out[22]} {usb_data_out[23]} {usb_data_out[24]} {usb_data_out[25]} {usb_data_out[26]} {usb_data_out[27]} {usb_data_out[28]} {usb_data_out[29]} {usb_data_out[30]} {usb_data_out[31]}]]
-create_debug_port u_ila_0 probe
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe1]
-set_property port_width 32 [get_debug_ports u_ila_0/probe1]
-connect_debug_port u_ila_0/probe1 [get_nets [list {usb_data_in[0]} {usb_data_in[1]} {usb_data_in[2]} {usb_data_in[3]} {usb_data_in[4]} {usb_data_in[5]} {usb_data_in[6]} {usb_data_in[7]} {usb_data_in[8]} {usb_data_in[9]} {usb_data_in[10]} {usb_data_in[11]} {usb_data_in[12]} {usb_data_in[13]} {usb_data_in[14]} {usb_data_in[15]} {usb_data_in[16]} {usb_data_in[17]} {usb_data_in[18]} {usb_data_in[19]} {usb_data_in[20]} {usb_data_in[21]} {usb_data_in[22]} {usb_data_in[23]} {usb_data_in[24]} {usb_data_in[25]} {usb_data_in[26]} {usb_data_in[27]} {usb_data_in[28]} {usb_data_in[29]} {usb_data_in[30]} {usb_data_in[31]}]]
-create_debug_port u_ila_0 probe
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe2]
-set_property port_width 8 [get_debug_ports u_ila_0/probe2]
-connect_debug_port u_ila_0/probe2 [get_nets [list {periph_tx_fulls[0]} {periph_tx_fulls[1]} {periph_tx_fulls[2]} {periph_tx_fulls[3]} {periph_tx_fulls[4]} {periph_tx_fulls[5]} {periph_tx_fulls[6]} {periph_tx_fulls[7]}]]
-create_debug_port u_ila_0 probe
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe3]
-set_property port_width 8 [get_debug_ports u_ila_0/probe3]
-connect_debug_port u_ila_0/probe3 [get_nets [list {periph_rx_rdens[0]} {periph_rx_rdens[1]} {periph_rx_rdens[2]} {periph_rx_rdens[3]} {periph_rx_rdens[4]} {periph_rx_rdens[5]} {periph_rx_rdens[6]} {periph_rx_rdens[7]}]]
-create_debug_port u_ila_0 probe
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe4]
-set_property port_width 8 [get_debug_ports u_ila_0/probe4]
-connect_debug_port u_ila_0/probe4 [get_nets [list {periph_rx_fulls[0]} {periph_rx_fulls[1]} {periph_rx_fulls[2]} {periph_rx_fulls[3]} {periph_rx_fulls[4]} {periph_rx_fulls[5]} {periph_rx_fulls[6]} {periph_rx_fulls[7]}]]
-create_debug_port u_ila_0 probe
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe5]
-set_property port_width 8 [get_debug_ports u_ila_0/probe5]
-connect_debug_port u_ila_0/probe5 [get_nets [list {periph_rx_emptys[0]} {periph_rx_emptys[1]} {periph_rx_emptys[2]} {periph_rx_emptys[3]} {periph_rx_emptys[4]} {periph_rx_emptys[5]} {periph_rx_emptys[6]} {periph_rx_emptys[7]}]]
-create_debug_port u_ila_0 probe
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe6]
-set_property port_width 8 [get_debug_ports u_ila_0/probe6]
-connect_debug_port u_ila_0/probe6 [get_nets [list {periph_rx_almost_fulls[0]} {periph_rx_almost_fulls[1]} {periph_rx_almost_fulls[2]} {periph_rx_almost_fulls[3]} {periph_rx_almost_fulls[4]} {periph_rx_almost_fulls[5]} {periph_rx_almost_fulls[6]} {periph_rx_almost_fulls[7]}]]
-create_debug_port u_ila_0 probe
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe7]
-set_property port_width 8 [get_debug_ports u_ila_0/probe7]
-connect_debug_port u_ila_0/probe7 [get_nets [list {periph_readys[0]} {periph_readys[1]} {periph_readys[2]} {periph_readys[3]} {periph_readys[4]} {periph_readys[5]} {periph_readys[6]} {periph_readys[7]}]]
-create_debug_port u_ila_0 probe
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe8]
-set_property port_width 8 [get_debug_ports u_ila_0/probe8]
-connect_debug_port u_ila_0/probe8 [get_nets [list {periph_idles[0]} {periph_idles[1]} {periph_idles[2]} {periph_idles[3]} {periph_idles[4]} {periph_idles[5]} {periph_idles[6]} {periph_idles[7]}]]
-create_debug_port u_ila_0 probe
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe9]
-set_property port_width 32 [get_debug_ports u_ila_0/probe9]
-connect_debug_port u_ila_0/probe9 [get_nets [list {lycan_out[0]} {lycan_out[1]} {lycan_out[2]} {lycan_out[3]} {lycan_out[4]} {lycan_out[5]} {lycan_out[6]} {lycan_out[7]} {lycan_out[8]} {lycan_out[9]} {lycan_out[10]} {lycan_out[11]} {lycan_out[12]} {lycan_out[13]} {lycan_out[14]} {lycan_out[15]} {lycan_out[16]} {lycan_out[17]} {lycan_out[18]} {lycan_out[19]} {lycan_out[20]} {lycan_out[21]} {lycan_out[22]} {lycan_out[23]} {lycan_out[24]} {lycan_out[25]} {lycan_out[26]} {lycan_out[27]} {lycan_out[28]} {lycan_out[29]} {lycan_out[30]} {lycan_out[31]}]]
-create_debug_port u_ila_0 probe
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe10]
-set_property port_width 32 [get_debug_ports u_ila_0/probe10]
-connect_debug_port u_ila_0/probe10 [get_nets [list {lycan_in[0]} {lycan_in[1]} {lycan_in[2]} {lycan_in[3]} {lycan_in[4]} {lycan_in[5]} {lycan_in[6]} {lycan_in[7]} {lycan_in[8]} {lycan_in[9]} {lycan_in[10]} {lycan_in[11]} {lycan_in[12]} {lycan_in[13]} {lycan_in[14]} {lycan_in[15]} {lycan_in[16]} {lycan_in[17]} {lycan_in[18]} {lycan_in[19]} {lycan_in[20]} {lycan_in[21]} {lycan_in[22]} {lycan_in[23]} {lycan_in[24]} {lycan_in[25]} {lycan_in[26]} {lycan_in[27]} {lycan_in[28]} {lycan_in[29]} {lycan_in[30]} {lycan_in[31]}]]
-create_debug_port u_ila_0 probe
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe11]
-set_property port_width 8 [get_debug_ports u_ila_0/probe11]
-connect_debug_port u_ila_0/probe11 [get_nets [list {decoded_grant[0]} {decoded_grant[1]} {decoded_grant[2]} {decoded_grant[3]} {decoded_grant[4]} {decoded_grant[5]} {decoded_grant[6]} {decoded_grant[7]}]]
-create_debug_port u_ila_0 probe
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe12]
-set_property port_width 4 [get_debug_ports u_ila_0/probe12]
-connect_debug_port u_ila_0/probe12 [get_nets [list {be_out[0]} {be_out[1]} {be_out[2]} {be_out[3]}]]
-create_debug_port u_ila_0 probe
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe13]
-set_property port_width 4 [get_debug_ports u_ila_0/probe13]
-connect_debug_port u_ila_0/probe13 [get_nets [list {be_in[0]} {be_in[1]} {be_in[2]} {be_in[3]}]]
-create_debug_port u_ila_0 probe
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe14]
-set_property port_width 32 [get_debug_ports u_ila_0/probe14]
-connect_debug_port u_ila_0/probe14 [get_nets [list {arbiter_out[0]} {arbiter_out[1]} {arbiter_out[2]} {arbiter_out[3]} {arbiter_out[4]} {arbiter_out[5]} {arbiter_out[6]} {arbiter_out[7]} {arbiter_out[8]} {arbiter_out[9]} {arbiter_out[10]} {arbiter_out[11]} {arbiter_out[12]} {arbiter_out[13]} {arbiter_out[14]} {arbiter_out[15]} {arbiter_out[16]} {arbiter_out[17]} {arbiter_out[18]} {arbiter_out[19]} {arbiter_out[20]} {arbiter_out[21]} {arbiter_out[22]} {arbiter_out[23]} {arbiter_out[24]} {arbiter_out[25]} {arbiter_out[26]} {arbiter_out[27]} {arbiter_out[28]} {arbiter_out[29]} {arbiter_out[30]} {arbiter_out[31]}]]
-create_debug_port u_ila_0 probe
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe15]
-set_property port_width 1 [get_debug_ports u_ila_0/probe15]
-connect_debug_port u_ila_0/probe15 [get_nets [list be_tri]]
-create_debug_port u_ila_0 probe
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe16]
-set_property port_width 1 [get_debug_ports u_ila_0/probe16]
-connect_debug_port u_ila_0/probe16 [get_nets [list in_fifo_empty]]
-create_debug_port u_ila_0 probe
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe17]
-set_property port_width 1 [get_debug_ports u_ila_0/probe17]
-connect_debug_port u_ila_0/probe17 [get_nets [list lycan_rd]]
-create_debug_port u_ila_0 probe
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe18]
-set_property port_width 1 [get_debug_ports u_ila_0/probe18]
-connect_debug_port u_ila_0/probe18 [get_nets [list lycan_wr]]
-create_debug_port u_ila_0 probe
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe19]
-set_property port_width 1 [get_debug_ports u_ila_0/probe19]
-connect_debug_port u_ila_0/probe19 [get_nets [list out_fifo_empty]]
-create_debug_port u_ila_0 probe
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe20]
-set_property port_width 1 [get_debug_ports u_ila_0/probe20]
-connect_debug_port u_ila_0/probe20 [get_nets [list usb_data_tri]]
-create_debug_port u_ila_0 probe
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe21]
-set_property port_width 1 [get_debug_ports u_ila_0/probe21]
-connect_debug_port u_ila_0/probe21 [get_nets [list usb_outen_l_OBUF]]
-create_debug_port u_ila_0 probe
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe22]
-set_property port_width 1 [get_debug_ports u_ila_0/probe22]
-connect_debug_port u_ila_0/probe22 [get_nets [list usb_rden_l_OBUF]]
-create_debug_port u_ila_0 probe
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe23]
-set_property port_width 1 [get_debug_ports u_ila_0/probe23]
-connect_debug_port u_ila_0/probe23 [get_nets [list usb_rst_l_OBUF]]
-create_debug_port u_ila_0 probe
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe24]
-set_property port_width 1 [get_debug_ports u_ila_0/probe24]
-connect_debug_port u_ila_0/probe24 [get_nets [list usb_rx_empty_IBUF]]
-create_debug_port u_ila_0 probe
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe25]
-set_property port_width 1 [get_debug_ports u_ila_0/probe25]
-connect_debug_port u_ila_0/probe25 [get_nets [list usb_tx_full_IBUF]]
-create_debug_port u_ila_0 probe
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe26]
-set_property port_width 1 [get_debug_ports u_ila_0/probe26]
-connect_debug_port u_ila_0/probe26 [get_nets [list usb_wren_l_OBUF]]
-set_property C_CLK_INPUT_FREQ_HZ 300000000 [get_debug_cores dbg_hub]
-set_property C_ENABLE_CLK_DIVIDER false [get_debug_cores dbg_hub]
-set_property C_USER_SCAN_CHAIN 1 [get_debug_cores dbg_hub]
-connect_debug_port dbg_hub/clk [get_nets clk_IBUF_BUFG]

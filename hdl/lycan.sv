@@ -19,7 +19,7 @@ module lycan (
     // as output, Drive low to send remote wakeup
     input logic [1:0] usb_gpio,  // TWO CONFIGURABLE GPIO. WHAT DO THEY DO?
 
-    inout logic [width_dut_pins-1:0] dut_pins,  // DUT pins
+    inout logic [num_dut_pins-1:0] dut_pins,  // DUT pins
 
     // Power supplies on Nexys Video
     output logic [1:0] set_vadj,
@@ -29,7 +29,7 @@ module lycan (
   // Local signals
   logic rst;
   logic read_periph_data;
-  (* mark_debug = "true" *) logic [num_peripherals-1:0]
+  logic [num_peripherals-1:0]
       periph_tx_fulls,
       periph_rx_rdens,
       periph_rx_emptys,
@@ -43,8 +43,8 @@ module lycan (
   logic [tristates_per_peripheral*num_peripherals-1:0] periph_tristates;
   // (* mark_debug = "true" *) logic [usb_packet_width-1:0] periph_tx_din;
   logic [2:0] periph_grant;
-    (* mark_debug = "true" *) logic [num_peripherals-1:0] decoded_grant;
-  (* mark_debug = "true" *) logic [usb_packet_width-1:0] arbiter_out;
+  logic [num_peripherals-1:0] decoded_grant;
+  logic [usb_packet_width-1:0] arbiter_out;
   logic arbiter_out_valid;
 
   logic [num_peripherals-1:0][usb_packet_width-1:0] mux_options;
@@ -57,8 +57,16 @@ module lycan (
   (* mark_debug = "true" *) logic [31:0] lycan_in, lycan_out;
   (* mark_debug = "true" *) logic in_fifo_empty, out_fifo_empty;
 
-    localparam periph_type_t periph_list [8] = {PERIPH_UART, PERIPH_LOOPBACK, PERIPH_LOOPBACK, 
-        PERIPH_LOOPBACK, PERIPH_LOOPBACK, PERIPH_LOOPBACK, PERIPH_LOOPBACK, PERIPH_LOOPBACK};
+  localparam periph_type_t periph_list[8] = {
+    PERIPH_UART,
+    PERIPH_LOOPBACK,
+    PERIPH_LOOPBACK,
+    PERIPH_LOOPBACK,
+    PERIPH_LOOPBACK,
+    PERIPH_LOOPBACK,
+    PERIPH_LOOPBACK,
+    PERIPH_LOOPBACK
+  };
 
   // Set voltage regulator for 2.5V
   // TODO: Do we want a separate clock domain to configure set_vadj and vadj_en sequentially after reset?
@@ -68,6 +76,9 @@ module lycan (
 
   // The CPU_RST button on our dev board is active-low
   assign rst = ~rst_l;
+
+  // Hard code dut pin outputs
+  assign dut_pins = {15'b0, periph_outs[0]};
 
   // Instantiate FT601 controller
   ft601_controller ft601 (
@@ -113,14 +124,14 @@ module lycan (
 
   // Fifo between
   ftdi_fifo ftdi_to_lycan_fifo (
-      .clk  (clk),           // input wire clk
-      .rst  (rst),           // input wire rst
-      .din  (usb_data_in),   // input wire [31 : 0] din
-      .wr_en(~usb_rden_l & periph_tx_valid),   // input wire wr_en
-      .rd_en(lycan_rd),      // input wire rd_en
-      .dout (lycan_in),      // output wire [31 : 0] dout
+      .clk  (clk),                            // input wire clk
+      .rst  (rst),                            // input wire rst
+      .din  (usb_data_in),                    // input wire [31 : 0] din
+      .wr_en(~usb_rden_l & periph_tx_valid),  // input wire wr_en
+      .rd_en(lycan_rd),                       // input wire rd_en
+      .dout (lycan_in),                       // output wire [31 : 0] dout
       // .full       (full),         // output wire full
-      .empty(in_fifo_empty)  // output wire empty
+      .empty(in_fifo_empty)                   // output wire empty
       // .wr_rst_busy(wr_rst_busy),  // output wire wr_rst_busy
       // .rd_rst_busy(rd_rst_busy)   // output wire rd_rst_busy
   );
@@ -128,7 +139,7 @@ module lycan (
   ftdi_fifo lycan_to_ftdi_fifo (
       .clk  (clk),            // input wire clk
       .rst  (rst),            // input wire rst
-    // switch to arbiter_out in the future
+      // switch to arbiter_out in the future
       .din  (lycan_out),      // input wire [31 : 0] din
       .wr_en(lycan_wr),       // input wire wr_en
       .rd_en(~usb_wren_l),    // input wire rd_en
