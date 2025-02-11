@@ -140,3 +140,9 @@
 
 ## 1/31/25
 - All: Finish Alpha Build Report and Test Plan (_ hrs)
+
+## 2/4/25
+- Adam: Started working on SPI modules and assited with UART system level debug (3 hrs)
+
+## 2/6/25
+- Adam: Finished designing SPI modules and designed a testbench to test both M and S functionality (3 hrs)
