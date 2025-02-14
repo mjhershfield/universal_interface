@@ -42,10 +42,16 @@ module ft601_controller (
   } state_t;
 
   state_t state_r, next_state;
+  logic usb_wren_l_r;
 
   always_ff @(posedge clk, posedge rst) begin
-    if (rst) state_r <= init;
-    else state_r <= next_state;
+    if (rst) begin
+      state_r <= init;
+      usb_wren_l_r <= 1'b1;
+    end else  begin
+      state_r <= next_state;
+      usb_wren_l_r <= usb_wren_l;
+    end
   end
 
   always_comb begin
@@ -97,7 +103,8 @@ module ft601_controller (
 
   assign usb_data_tri = ~usb_outen_l; //if writing, do not tristate, otherise tristate
   assign be_tri = ~usb_outen_l;  //if writing do not tri, otherwise tri
-  assign be_out = (~usb_wren_l) ? '1 : '0; //temporary, all data is valid
+  assign be_out = ~usb_wren_l ? '1 : '0; //temporary, all data is valid
+  // assign be_out = (~usb_wren_l | ~usb_wren_l_r) & usb_outen_l? '1 : '0; //temporary, all data is valid
 
   assign usb_rst_l = ~rst;
 

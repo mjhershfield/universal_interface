@@ -79,6 +79,9 @@ module lycan_tb;
   assign outen = ~usb_outen_l;
   assign usb_tx_full = '0;
 
+  // Create loopback on UART module
+  assign dut_pins[1] = dut_pins[0];
+
   mock_fifo #(
       .WIDTH(WIDTH),
       .INITIAL_FILLED(8)

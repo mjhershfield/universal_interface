@@ -57,8 +57,13 @@ module lycan (
   (* mark_debug = "true" *) logic [31:0] lycan_in, lycan_out;
   (* mark_debug = "true" *) logic in_fifo_empty, out_fifo_empty;
 
+    // 0 = output, 1 = input
+    logic [num_dut_pins-1:0] dut_pins_in;
+    logic [num_dut_pins-1:0] dut_pins_out;
+    logic [num_dut_pins-1:0] dut_pins_tri;
   localparam periph_type_t periph_list[8] = {
     PERIPH_UART,
+    // PERIPH_LOOPBACK,
     PERIPH_LOOPBACK,
     PERIPH_LOOPBACK,
     PERIPH_LOOPBACK,
@@ -77,8 +82,24 @@ module lycan (
   // The CPU_RST button on our dev board is active-low
   assign rst = ~rst_l;
 
-  // Hard code dut pin outputs
-  assign dut_pins = {15'b0, periph_outs[0]};
+  // Hard code dut pin outputs to 0 = UART TX, 1 = UART RX
+    // 0 = output, 1 = input
+    assign dut_pins_out = {15'b0, periph_outs[0]};
+    assign periph_ins[0] = dut_pins_in[1];
+    assign dut_pins_tri = 16'hFFFE;
+    // assign dut_pins_out = 16'b0;
+    // assign dut_pins_tri = 16'hFFFF;
+
+  // Tristate buffer for DUT pins
+  genvar dut_pin;
+  for (dut_pin = 0; dut_pin < num_dut_pins; dut_pin++) begin : gen_dut_pins_iobuf
+    IOBUF dut_pins_iobuf (
+        .O (dut_pins_in[dut_pin]),
+        .IO(dut_pins[dut_pin]),
+        .I (dut_pins_out[dut_pin]),
+        .T (dut_pins_tri[dut_pin])
+    );
+  end
 
   // Instantiate FT601 controller
   ft601_controller ft601 (
@@ -216,24 +237,6 @@ module lycan (
       .valid(1'b1),
       .out(decoded_grant)
   );
-
-  // Register all outputs to the FTDI
-  // delay #(.WIDTH(32+1+4+1+4), .CYCLES(1)) ftdi_outputs_delay (
-  //   .clk(clk),
-  //   .rst(rst),
-  //   .en(1'b1),
-  //   .in({usb_data_out, usb_data_tri, be_out, be_tri, controller_wren, controller_rden, controller_outen, controller_rst}),
-  //   .out({usb_data_out_r, usb_data_tri_r, be_out_r, be_tri_r, usb_wren_l, usb_rden_l, usb_outen_l, usb_rst_l})
-  // );
-
-  // assign usb_data_out_r = usb_data_out;
-  // assign usb_data_tri_r = usb_data_tri;
-  // assign be_out_r = be_out;
-  // assign be_tri_r = be_tri;
-  // assign usb_wren_l = controller_wren;
-  // assign usb_rden_l = controller_rden;
-  // assign usb_outen_l = controller_outen;
-  // assign usb_rst_l = controller_rst;
 
   assign periph_rx_rdens = decoded_grant & ~periph_rx_emptys;
 
