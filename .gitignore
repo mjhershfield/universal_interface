@@ -12,3 +12,7 @@ software/**/*.exe
 /software/build
 /software/.vscode
 /software/__pycache__
+
+# Do not version control C++ build files
+/software/non_gui_cpp/build
+/software/qt_gui_cpp/build

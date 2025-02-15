@@ -61,7 +61,7 @@ def write_to_FIFO(dev, mutex, periphAddr, isConfig, data, format='Hex'):
         data_b = data_num.to_bytes(3, 'little')
         # Write to the FIFO
         mutex.acquire() # Acquire the I/O threading lock (blocking)
-        num_bytes_written = ftdi.send_data_packet(dev, peripheral_addr=periphAddr, data=data_b)
+        num_bytes_written = ftdi.write_data_packet(dev, peripheral_addr=periphAddr, data=data_b)
         mutex.release() # Release the threading lock
         return data_b, num_bytes_written
     else:
@@ -79,7 +79,7 @@ def read_from_FIFO(dev, GUI, mutex):
             periphIndex = int.from_bytes(data_in, 'little') >> 29
             if(GUI.peripheralTabs[periphIndex]):
                 data = data_in[0:3]
-                GUI.peripheralTabs[periphIndex].displayRXData(str(hex(int.from_bytes(data, 'little'))))
+                GUI.peripheralTabs[periphIndex].displayRXData(str(hex(int.from_bytes(data, 'little'))), True)
         # Tell the main thread we are sleeping
         time.sleep(0.1) # Sleep for 100 ms (CHANGE LATER???)
     

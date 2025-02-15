@@ -53,7 +53,7 @@ else:
 # Try to send data to the FIFO
 numBytesWritten = 0
 # numBytesWritten += send_data_packet(dev, pipe=0x02, peripheral_addr=0, data=b'ABC')
-data = b'\x00\x11\x22\x33\x44\x55\x66\x77\x88\x99\xAA\xBB\xCC\xDD\xEE\xFF'
+data = b'\x00\x11\x22\x33\x44\x55\x66\x77'
 # data = (0x0C0A0B0C00110011AABBCCDD).to_bytes(12, 'little')
 # data = (0x0C0A0B0C00110011).to_bytes(8, 'little')
 print(f'\nData to write:', data.hex())
@@ -67,11 +67,9 @@ print('transferred ', t, 'bytes')
 
 # Read
 buffread = b''
-for i in range(4):
-    dbuff = c.c_buffer(len(data))
-    t = dev.readPipe(0x82, data=dbuff, datalen=4)
-    buffread += dbuff.raw[:t]
-    print(dbuff.raw[:])
+for i in range(1):
+    buffread = fifo.read_raw_bytes(dev, 0x82, 4)
+    print(buffread)
     print(dev.getLastError())
 print(f'\n Data read:', buffread.hex())
 

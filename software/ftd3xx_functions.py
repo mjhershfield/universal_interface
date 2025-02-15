@@ -48,6 +48,8 @@ def read_raw_bytes(device, pipe=0x82, length=4, suppressErrors=False):
     transferred = 0
     buffread = b''
     while(transferred != length):                    
+        # Read data from specified pipe
+        output = device.readPipeEx(pipe=pipe, datalen=(length - transferred))
         # Check status
         status = device.getLastError()
         if(status != 0):
@@ -55,8 +57,7 @@ def read_raw_bytes(device, pipe=0x82, length=4, suppressErrors=False):
             if(not suppressErrors):
                 print(f'Error with reading. Status Code {status}')
             break
-        # Read data from specified pipe
-        output = device.readPipeEx(pipe=pipe, datalen=(length - transferred))
+        # Store result
         buffread = output['bytes'] + buffread
         transferred += output['bytesTransferred']
     return buffread
@@ -105,7 +106,7 @@ def write_data_packet(device, pipe=0x02, peripheral_addr=0, data=b'ABC', suppres
     Returns:
         int: Number of raw bytes transferred (4 = Success)
     """
-    packet = construct_data_packet(pipe, peripheral_addr, data, suppressErrors)
+    packet = construct_data_packet(peripheral_addr, data)
     return write_raw_bytes(device=device, pipe=pipe, raw=packet, suppressErrors=suppressErrors)
 
 def write_data(device, pipe=0x02, peripheral_addr=0, data=b'ABC', suppressErrors=False):

@@ -62,7 +62,7 @@ def main(loopCount):
         rawPacket += 3 << 32-8 # don't cares (set to 1 for now)
         rawPacket += int.from_bytes(data, byteorder='little')
 
-        fifo.send_data_packet(device=dev, pipe=0x02, peripheral_addr=pId, data=data)
+        fifo.write_data_packet(device=dev, pipe=0x02, peripheral_addr=pId, data=data)
         isConfig, readData = fifo.read_packet(device=dev, pipe=0x82)
 
         # Compare write/read data
