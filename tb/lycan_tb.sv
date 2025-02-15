@@ -68,7 +68,7 @@ module lycan_tb;
   logic usb_rst_l;
   logic usb_wakeup;  // bidirectional. as input; 0 = USB active; 1 = usb suspended.
   logic [1:0] usb_gpio;  // TWO CONFIGURABLE GPIO. WHAT DO THEY DO?
-  wire [width_dut_pins-1:0] dut_pins;  // DUT pins
+  wire [num_dut_pins-1:0] dut_pins;  // DUT pins
   // Power supplies on Nexys Video
   logic [1:0] set_vadj;
   logic vadj_en;
@@ -78,6 +78,9 @@ module lycan_tb;
   assign usb_rx_empty = empty;
   assign outen = ~usb_outen_l;
   assign usb_tx_full = '0;
+
+  // Create loopback on UART module
+  assign dut_pins[1] = dut_pins[0];
 
   mock_fifo #(
       .WIDTH(WIDTH),

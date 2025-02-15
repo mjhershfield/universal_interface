@@ -140,3 +140,23 @@
 
 ## 1/31/25
 - All: Finish Alpha Build Report and Test Plan (_ hrs)
+
+## 2/4/25
+- Adam: Started working on SPI modules and assited with UART system level debug (3 hrs)
+
+## 2/6/25
+- Adam: Finished designing SPI modules and designed a testbench to test both M and S functionality (3 hrs)
+
+## 2/11/25
+- All: Meet to work on UART testing and discuss plans (2 hrs)
+
+## 2/12/25
+- Matthew S: Research logic-level conversion circuits & chips (1 hr)
+- Matthew S: Simulate LLC circuits in LTSpice and draft initial PCB circuit (3 hrs)
+
+## 2/13/25
+- All: Meet with Carsten (15 min)
+- Matthew S: Work on testing C++ software, notifications (3 hrs)
+
+## 2/14/25
+- Matthew S: Work on C++ GUI using QT Creator (3 hrs)
