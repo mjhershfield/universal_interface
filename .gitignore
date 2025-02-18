@@ -15,6 +15,7 @@ software/python/__pycache__
 software/.vscode
 software/.qtc_clangd
 software/cpp/.qtc_clangd
+software/cpp/qt_gui/.qtc_clangd
 
 # Do not version control C++ build files
 software/cpp/non_gui/build
