@@ -9,4 +9,9 @@ package lycan_globals;
 
   localparam int usb_packet_width = 32;
   localparam int periph_address_width = $clog2(num_peripherals);
+
+  typedef enum logic [2:0] {
+    PERIPH_LOOPBACK,
+    PERIPH_UART
+  } periph_type_t;
 endpackage

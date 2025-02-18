@@ -85,3 +85,78 @@
 
 ## 11/29/24
 - Matthew S: Research Python packaging using pyinstaller, make the GUI and .exe for Windows (2 hrs)
+
+## 12/16/24
+- Matthew H: Prototype a Rust program for interacting with Lycan (4 hrs)
+
+## 12/22/24
+- Matthew H: Test different strategies for meeting timing constraints of FT601: adding registers, adjusting clock freq (3 hrs)
+
+## 12/27/24
+- Matthew S: Worked on cleaning up the Python code-base, standardized endianness of packets in SW (3 hrs)
+
+## 1/3/25
+- Matthew H: Added a layer of FIFOs between Lycan and the FT601, locked P&R to eliminate metastability (3 hrs)
+
+## 1/4/25
+- Matthew H: Solved issue where a peripheral sent 50+ copies of the first byte it received from the host. (1 hr)
+
+## 1/6/25
+- Matthew H: Identified problem of an undersized read buffer causing dropped packets, tested software mitigations (2 hrs)
+
+## 1/14/25
+- All: Meet to discuss upcoming semester, create Github Projects tasks (1 hr)
+
+## 1/16/25
+- All: Work on Lycan hardware (UART peripheral) and software (fix lock-up on GUI) (2 hrs)
+- Matthew S: Create thread-safe mutex structure for GUI multithread reads (2 hrs)
+- Adam and Matthew H: Refactor and testbench UART RX module to enable different configurations (2 hrs)
+
+## 1/21/25
+- All: Work on hardware (UART peripheral), integration, and software (lost packets) (2 hrs)
+- Matthew H: Debug the FPGA datapath for packet dropping issue (1 hr)
+- Matthew S: Contact FTDI and debug the software to see why every other packet is being lost (1 hr)
+
+## 1/23/25
+- All: Meet to work on hardware and software (1 hr)
+- Adam: Work on UART tx module and design specifications for packet error handling (1 hr)
+
+## 1/25/25
+- Matthew S: Work on simulated FTDI python script for testing GUI without FPGA (2 hrs)
+
+## 1/28/25
+- All: Instructor and Stakeholder meetings (30 min)
+- All: Discuss future plans and get updated on current progress (30 min)
+- Matthew S: Begin PCB schematic, research feasibility/costs (1 hr)
+- Adam: Work on debugging Vivado simulation issue causing system deadlock to occur (3 hrs)
+
+## 1/29/25
+- Adam: Work on testbenching and debugging UART tx across different input waveforms (3 hrs)
+
+## 1/30/25
+- Matthew S: Work on software (GUI logger feature) (2 hrs)
+- Matthew S: Work on Alpha Report and Test Plan (1 hr)
+- Adam and Matthew H: Work on integrating UART module into rest of system and initial testbenching (2 hrs)
+
+## 1/31/25
+- All: Finish Alpha Build Report and Test Plan (_ hrs)
+
+## 2/4/25
+- Adam: Started working on SPI modules and assited with UART system level debug (3 hrs)
+
+## 2/6/25
+- Adam: Finished designing SPI modules and designed a testbench to test both M and S functionality (3 hrs)
+
+## 2/11/25
+- All: Meet to work on UART testing and discuss plans (2 hrs)
+
+## 2/12/25
+- Matthew S: Research logic-level conversion circuits & chips (1 hr)
+- Matthew S: Simulate LLC circuits in LTSpice and draft initial PCB circuit (3 hrs)
+
+## 2/13/25
+- All: Meet with Carsten (15 min)
+- Matthew S: Work on testing C++ software, notifications (3 hrs)
+
+## 2/14/25
+- Matthew S: Work on C++ GUI using QT Creator (3 hrs)

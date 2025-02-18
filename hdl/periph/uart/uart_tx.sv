@@ -28,6 +28,7 @@ module uart_tx (
   logic [7:0] tx_data_r, nxt_tx_data;
   logic [2:0] data_count_r, nxt_data_count;
   logic parity_bit_r, nxt_parity;
+  logic parity_type_r, nxt_parity_type;
   stop_bits_t stop_bits_r, nxt_stop_bits;
 
   always_ff @(posedge clk or posedge rst) begin
@@ -37,12 +38,14 @@ module uart_tx (
       data_count_r   <= '0;
       parity_bit_r <= 1'b0;
       stop_bits_r <= STOP_BITS_1;
+      parity_type_r <= PARITY_NONE;
     end else begin
       state_r <= nxt_state;
       tx_data_r <= nxt_tx_data;
       data_count_r   <= nxt_data_count;
       parity_bit_r <= nxt_parity;
       stop_bits_r <= nxt_stop_bits;
+      parity_type_r <= nxt_parity_type;
     end
   end
 
@@ -52,6 +55,7 @@ module uart_tx (
     nxt_data_count = data_count_r;
     nxt_parity = parity_bit_r;
     nxt_stop_bits = stop_bits_r;
+    nxt_parity_type = parity_type_r;
     // Default values for combinational signals
     tx_busy = 1'b1;
     tx = 1'b1;
@@ -71,7 +75,8 @@ module uart_tx (
         tx_rden = 1'b1;
         nxt_tx_data = tx_data;
         nxt_stop_bits = stop_bits;
-        case (parity)
+        nxt_parity_type = parity;
+        case (parity_type_r)
           PARITY_ODD: begin
             nxt_parity = ~^tx_data;
           end

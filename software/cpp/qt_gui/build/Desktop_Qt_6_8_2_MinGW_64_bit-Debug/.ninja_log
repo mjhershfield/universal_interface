@@ -1,0 +1,12 @@
+# ninja log v6
+57	266	7612991487994071	LycanGUI_autogen/timestamp	86a445b80a16a318
+570	4468	7612988646598664	CMakeFiles/LycanGUI.dir/lycan.cpp.obj	ed20eb3f2eb6d226
+57	266	7612991487994071	C:/Users/selfb/Documents/LycanGUI/build/Desktop_Qt_6_8_2_MinGW_64_bit-Debug/LycanGUI_autogen/timestamp	86a445b80a16a318
+57	266	7612991487994071	LycanGUI_autogen/mocs_compilation.cpp	86a445b80a16a318
+57	266	7612991487994071	C:/Users/selfb/Documents/LycanGUI/build/Desktop_Qt_6_8_2_MinGW_64_bit-Debug/LycanGUI_autogen/mocs_compilation.cpp	86a445b80a16a318
+247	3307	7612964541642729	CMakeFiles/LycanGUI.dir/LycanGUI_autogen/mocs_compilation.cpp.obj	facb476015eb9f1e
+991	7084	7612942109608059	CMakeFiles/LycanGUI.dir/main.cpp.obj	9c4f529ea63111f6
+419	5975	7612953207348735	CMakeFiles/LycanGUI.dir/lycanwindow.cpp.obj	45928ee6248939cd
+410	7135	7612949790007068	CMakeFiles/LycanGUI.dir/peripheraltab.cpp.obj	df28384bb6a43208
+3307	3615	7612964572254149	LycanGUI.exe	19b640a5e215fd1c
+43	1046	7612991484981230	build.ninja	b8019b2158016f83

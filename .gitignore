@@ -6,8 +6,13 @@ vivado/universal_interface.srcs/**/*.dcp
 
 # Do not version control compiled binary files
 software/**/*.pyc
+software/**/*.exe
 
 # Do not version control pyinstaller build files (except .exe)
 /software/build
 /software/.vscode
 /software/__pycache__
+
+# Do not version control C++ build files
+/software/non_gui_cpp/build
+/software/qt_gui_cpp/build

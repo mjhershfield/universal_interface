@@ -4,7 +4,7 @@ package uart_pkg;
     STOP_BITS_2
   } stop_bits_t;
 
-  typedef enum logic[1:0] {
+  typedef enum logic [1:0] {
     PARITY_NONE,
     PARITY_ODD,
     PARITY_EVEN
