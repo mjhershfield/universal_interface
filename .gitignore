@@ -9,10 +9,13 @@ software/**/*.pyc
 software/**/*.exe
 
 # Do not version control pyinstaller build files (except .exe)
-/software/build
-/software/.vscode
-/software/__pycache__
+software/python/build
+software/python/__pycache__
+
+software/.vscode
+software/.qtc_clangd
+software/cpp/.qtc_clangd
 
 # Do not version control C++ build files
-/software/non_gui_cpp/build
-/software/qt_gui_cpp/build
+software/cpp/non_gui/build
+software/cpp/qt_gui/build

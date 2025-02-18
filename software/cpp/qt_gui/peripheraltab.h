@@ -1,28 +1,16 @@
 #ifndef PERIPHERALTAB_H
 #define PERIPHERALTAB_H
+#pragma once
+#include "lycanwindow.h"
 
-#include <QWidget>
-#include <QPushButton>
-#include <QTextEdit>
-#include <QCheckBox>
-#include <QLineEdit>
-#include <QComboBox>
-#include <QHBoxLayout>
-#include <QFormLayout>
-#include "lycan.h"
-#include <mutex>
-#include <iostream>
-#include <fstream>
-#include <ctime>
-#include <cmath>
+class LycanWindow;
 
 class PeripheralTab : public QWidget
 {
     Q_OBJECT
 public:
 
-    Lycan* lycanDev;
-    std::mutex* mut;
+    LycanWindow* parentWindow;
 
     unsigned int periphIndex;
 
@@ -41,10 +29,11 @@ public:
     std::string logFileName;
     bool logging = false;
 
-    explicit PeripheralTab(Lycan* dev, std::mutex* mut, unsigned int periphIndex, QWidget *parent = nullptr);
+    explicit PeripheralTab(unsigned int periphIndex, LycanWindow *parent = nullptr);
     void initComponents();
     void createLogFile();
     void onSubmitTX();
+    void displayRXData(std::vector<u_char> data);
 
 signals:
 };

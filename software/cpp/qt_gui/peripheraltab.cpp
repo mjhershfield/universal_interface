@@ -29,11 +29,10 @@ int32_t dataStringToNum(std::string inStr, std::string format) {
     return res;
 }
 
-PeripheralTab::PeripheralTab(Lycan* dev, std::mutex* mut, unsigned int periphIndex, QWidget *parent)
+PeripheralTab::PeripheralTab(unsigned int periphIndex, LycanWindow *parent)
     : QWidget{parent}
 {
-    this->lycanDev = dev;
-    this->mut = mut;
+    this->parentWindow = parent;
     this->periphIndex = periphIndex;
     initComponents();
 }
@@ -79,17 +78,21 @@ void PeripheralTab::onSubmitTX() {
         }
     } else {
         // Create a data vector using the input string
-        std::vector<u_char> data;
         for(u_char c : txDataField->text().toStdString()) {
             data.insert(data.begin(), c);
         }
+        std::cout << std::string(data.begin(), data.end()) << std::endl;
     }
-    // Acquire mutex lock
-    mut->lock();
-    // Transmit data
-    lycanDev->writeData(periphIndex, data);
-    // Release mutex lock
-    mut->unlock();
+    parentWindow->writeToFifo(periphIndex, data);
+}
+
+void PeripheralTab::displayRXData(std::vector<u_char> data) {
+    // Convert the data vector to a string
+    std::string res = "Received: ";
+    for(u_char c : data) {
+        res += c;
+    }
+    rxDataLabel->append(QString::fromStdString(res));
 }
 
 void PeripheralTab::initComponents() {
