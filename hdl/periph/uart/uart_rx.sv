@@ -12,8 +12,74 @@ module uart_rx (
     // Configuration data (for now, just 8N1)
     input  logic [3:0] num_data_bits,
     input  stop_bits_t       stop_bits,
-    input  parity_t          parity
+    input  parity_t          parity,
+
+    //to fix out of phase rx and tx clocks
+    input logic [3:0] rx_tx_clk_ratio
 );
+
+  //then sample every rx_tx_clk_ratio cycles
+  typedef enum logic [1:0] {
+    S_WAIT,
+    S_OFFSET,
+    S_REPEAT
+  } trig_fsm_state_t;
+
+  trig_fsm_state_t st_r;
+  logic trigger_sample_r;
+  logic first_edge_r;
+  logic [3:0] trigger_cnt_r;
+
+  always_comb begin
+    //detect first falling edge of rx line
+    if (~rx && first_edge_r == 0) begin
+      first_edge_r = '1;
+    end
+  end
+
+  always_ff @(posedge clk or posedge rst) begin
+    if (rst) begin
+      st_r <= S_WAIT;
+      first_edge_r <= '0;
+      trigger_sample_r <= '0;
+      trigger_cnt_r <= '0;
+    end else begin
+
+      trigger_sample_r <= '0;
+
+      case (st_r)
+        S_WAIT: begin
+          if (first_edge_r == 1) begin
+            st_r <= S_OFFSET;
+            trigger_cnt_r <= 0;
+          end
+        end
+
+        //after rx falls wait until rx_tx_clk_ratio / 2 cycles for first sample
+        S_OFFSET: begin
+          if (trigger_cnt_r == (rx_tx_clk_ratio /2) - 1) begin
+            st_r <= S_REPEAT;
+            trigger_sample_r <= '1;
+            trigger_cnt_r <= '0;
+          end else begin
+            trigger_cnt_r <= trigger_cnt_r + 1;
+          end
+        end
+
+        //keep sampling at the offset created
+        S_REPEAT: begin
+          if (trigger_cnt_r == rx_tx_clk_ratio - 1) begin
+            trigger_cnt_r <= '0;
+            trigger_sample_r <= '1;
+          end else begin
+            trigger_cnt_r <= trigger_cnt_r + 1;
+          end
+        end
+
+      endcase
+
+    end
+  end
 
   typedef enum logic [2:0] {
     S_WAIT_START,
@@ -31,7 +97,7 @@ module uart_rx (
   stop_bits_t stop_bits_r, nxt_stop_bits;
   logic rx_error_r, nxt_rx_error;
 
-  always_ff @(posedge clk or posedge rst) begin
+  always_ff @(posedge trigger_sample_r or posedge rst) begin
     if (rst) begin
       state_r <= S_WAIT_START;
       rx_data_r <= '0;
@@ -127,4 +193,3 @@ module uart_rx (
   assign rx_data = rx_data_r;
 
 endmodule
-
