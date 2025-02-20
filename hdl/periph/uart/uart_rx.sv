@@ -18,6 +18,7 @@ module uart_rx (
     input logic [3:0] rx_tx_clk_ratio
 );
 
+
   //then sample every rx_tx_clk_ratio cycles
   typedef enum logic [1:0] {
     S_WAIT,

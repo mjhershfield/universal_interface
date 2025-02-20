@@ -19,7 +19,6 @@ logic [3:0] rx_tx_clk_ratio;
 
 logic tx_clk;   //this is the slow clock
 
-
   uart_rx DUT (.*);
 
   initial begin
