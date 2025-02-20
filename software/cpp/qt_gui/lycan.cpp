@@ -17,8 +17,8 @@ Lycan::Lycan() {
 int Lycan::writeRawBytes(std::vector<u_char> raw) {
     FT_STATUS ftStatus = FT_OK;
     ULONG ulBytesWritten = 0;
-    PUCHAR pucBuffer = new UCHAR[raw.size()]; // allocate memory
-    int length = raw.size();
+    unsigned int length = raw.size();
+    PUCHAR pucBuffer = new UCHAR[length]; // allocate memory
     std::copy(raw.begin(), raw.end(), pucBuffer);
     ftStatus = FT_WritePipe(dev, 0x02, pucBuffer, raw.size(), &ulBytesWritten, NULL);
     delete[] pucBuffer; // release memory
@@ -112,7 +112,7 @@ Lycan::ReadResult Lycan::readPacket() {
         return res;
     } else {
         Lycan::ReadResult res = {{}, {}, 0, false};
-        throw std::runtime_error("Error reading a packet!");
+        // throw std::runtime_error("Error reading a packet!");
         return res;
     }
 }
