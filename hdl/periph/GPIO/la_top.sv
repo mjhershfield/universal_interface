@@ -11,12 +11,11 @@ module la_top #(
     logic go;
     logic [23:0] max_count;
     logic [15:0] reads;
-    logic [width-1:0] output_reg;
-    logic data_valid_reg;
+    logic div_clk;
+    logic div_clk_rising;
 
     assign go = packet_in[28];
-    assign packet_out = output_reg;
-    assign data_valid = data_valid_reg;
+
 
 
     clk_div #( .width(24) ) clk_div ( 
@@ -27,28 +26,36 @@ module la_top #(
     );
 
     logic_analyzer #(.width(16)) logic_analyzer(
-        .clk(clk),
+        .clk(div_clk),
         .rst(rst),
         .pin_vals(pin_vals),
         .reads(reads)
     );
 
+    edge_detect edge_inst (
+        .clk(clk), 
+        .rst(rst),
+        .signal_in(div_clk),
+        .posedge_detected(div_clk_rising)
+    );
+
+
     always_ff @(posedge clk, posedge rst) begin
         if (rst) begin
-            data_valid_reg <= 1'b0;
+            data_valid <= 1'b0;
             max_count <= '0;
-            output_reg <= '0;
+            packet_out <= '0;
 
         end else begin
-            max_count <= 24'd8; //hardcoded to 16x  div
-            output_reg[31:29] <= 3'b000;
-            output_reg[28] <= 1'b0;
-            output_reg[27:26] <= 2'b10;
-            output_reg[25:24] <= 2'b00;
-            output_reg[23:16] <= '0;
-            output_reg[15:0] <= reads;
+            max_count <= 24'd7; //hardcoded to 16x  div
+            packet_out[31:29] <= 3'b000;
+            packet_out[28] <= 1'b0;
+            packet_out[27:26] <= 2'b10;
+            packet_out[25:24] <= 2'b00;
+            packet_out[23:16] <= '0;
+            packet_out[15:0] <= reads;
             
-            data_valid_reg <= 1'b1;
+            data_valid <= 1'b1 & div_clk_rising;
 
 
         end
