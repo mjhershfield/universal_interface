@@ -11,6 +11,13 @@ Lycan::Lycan() {
     if(FT_FAILED(ftStatus)) {
         throw std::runtime_error("Error creating device!");
     }
+    FT_SetSuspendTimeout(dev, 0);
+}
+
+// Method to set the pipe timeout
+bool Lycan::setLycanPipeTimeout(int pipe, int timeoutMs) {
+    FT_STATUS ftStatus = FT_SetPipeTimeout(dev, (u_char)pipe, (ULONG)timeoutMs);
+    return !FT_FAILED(ftStatus);
 }
 
 // Method to write raw bytes
@@ -33,7 +40,7 @@ std::vector<u_char> Lycan::readRawBytes(const u_int length) {
     FT_STATUS ftStatus = FT_OK;
     ULONG ulBytesRead = 0;
     PUCHAR pucBuffer = new UCHAR[length]; // allocate memory
-    ftStatus = FT_ReadPipe(dev, 0x82, pucBuffer, length, &ulBytesRead, NULL);
+    ftStatus = FT_ReadPipeEx(dev, 0x82, pucBuffer, length, &ulBytesRead, NULL);
     if(!FT_FAILED(ftStatus) && ulBytesRead > 0) {
         std::vector<u_char> raw(ulBytesRead);
         std::copy(pucBuffer, pucBuffer + ulBytesRead, raw.begin());
@@ -105,7 +112,7 @@ Lycan::ReadResult Lycan::readPacket() {
         bool isConfig = (rawPacket[3] & 0b00010000) >> 4; // parse out config flag
         std::vector<u_char> data((rawPacket[3] & 0b00001100) >> 2); // parse out valid bytes flag
         // Parse out the data byte values (for numValidBytes)
-        for(int i = 0; i < data.size(); i++) {
+        for(unsigned int i = 0; i < data.size(); i++) {
             data[i] = rawPacket[i];
         }
         Lycan::ReadResult res = {rawPacket, data, peripheralAddr, isConfig};

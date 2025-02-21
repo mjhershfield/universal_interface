@@ -35,7 +35,7 @@ class LycanWindow : public QTabWidget
 
 public:
     Lycan* dev;
-    std::mutex* mut;
+    std::mutex mut;
     std::thread* rxThread;
     PeripheralTab* tabs[8];
     LycanWindow(QWidget *parent = nullptr);

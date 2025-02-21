@@ -45,7 +45,7 @@ void PeripheralTab::createLogFile() {
             logging = true;
             logButton->setStyleSheet("background-color: red;");
             logButton->setText("Stop Logging to File");
-        } catch(std::runtime_error e) {
+        } catch(...) {
             errorLabel->setText("Error creating the log file!");
         }
     } else {
@@ -56,7 +56,7 @@ void PeripheralTab::createLogFile() {
             logFile.close();
             logButton->setStyleSheet("background-color: green;");
             logButton->setText("Start Logging to File");
-        } catch(std::runtime_error e) {
+        } catch(...) {
             errorLabel->setText("Error saving/closing the log file!");
         }
     }

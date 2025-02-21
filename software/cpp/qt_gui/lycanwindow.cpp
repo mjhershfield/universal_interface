@@ -9,10 +9,9 @@ LycanWindow::LycanWindow(QWidget *parent) : QTabWidget(parent)
 
     // Initialize Lycan device object
     dev = new Lycan();
+    std::cout << dev->setLycanPipeTimeout(0x82, 100) << std::endl;
+    std::cout << dev->setLycanPipeTimeout(0x02, 100) << std::endl;
     // dev = nullptr;
-
-    // Initialize mutex
-    mut = new std::mutex();
 
     // Tab Setup
     for(unsigned int i = 0; i < 8; i++) {
@@ -32,22 +31,20 @@ LycanWindow::~LycanWindow()
 }
 
 int LycanWindow::writeToFifo(unsigned int periphIndex, std::vector<u_char> data) {
-    mut->lock();
+    std::unique_lock<std::mutex> lock(mut); // Auto locks on creation and unlocks on out-of-scope
     int res = dev->writeData(periphIndex, data);
-    mut->unlock();
-
     return res;
 }
 
 void LycanWindow::readFromFifo() {
     while(true) {
-        mut->lock();
+        std::unique_lock<std::mutex> lock(mut); // Auto locks on creation
         Lycan::ReadResult res = dev->readPacket();
-        mut->unlock();
-        unsigned int pId = res.peripheralAddr;
-        if(!res.rawPacket.empty() && tabs[pId] != nullptr) {
-            tabs[pId]->displayRXData(res.data);
-        }
+        lock.unlock(); // Manual unlock
+        // unsigned int pId = res.peripheralAddr;
+        // if(!res.rawPacket.empty() && tabs[pId] != nullptr) {
+        //     tabs[pId]->displayRXData(res.data);
+        // }
         Sleep(100);
     }
 }

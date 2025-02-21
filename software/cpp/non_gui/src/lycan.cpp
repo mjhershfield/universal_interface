@@ -10,6 +10,9 @@ Lycan::Lycan() {
     if(FT_FAILED(ftStatus)) {
         throw std::runtime_error("Error creating device!");
     }
+    FT_SetPipeTimeout(dev, 0x82, 100);
+    FT_SetPipeTimeout(dev, 0x02, 100);
+    FT_SetSuspendTimeout(dev, 0);
 }
 
 // Method to write raw bytes

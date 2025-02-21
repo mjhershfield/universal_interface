@@ -20,6 +20,9 @@ public:
     // Constructor
     Lycan();
 
+    // Method to set the FTDI pipe timout for given pipe
+    bool setLycanPipeTimeout(int pipe, int timeoutMs);
+
     // Method to send raw bytes to Lycan
     int writeRawBytes(std::vector<u_char> raw);
 

@@ -7,20 +7,21 @@ from PyQt6.QtWidgets import (
     QTabWidget
 )
 from PyQt6.QtGui import QIntValidator, QColor
-import pyqtgraph as pg
-import ftd3xx, threading, time, queue
-from ftd3xx.defines import *
-import ftd3xx_functions as ftdi
+import lycan
+import PyD3XX
 from random import randint
+import threading, time
 
 # Constants #
 
 WINDOW_WIDTH = 960
 WINDOW_HEIGHT = 540
 
-# Global Vars #
+# Globals #
 
-turn = 'R'
+lycanDev = None
+mutex = None
+gui = None
 
 # Helper Functions #
 
@@ -53,45 +54,68 @@ def str_to_num(inStr, format):
                 return -1 # Not a proper hex string
         return res
     
-def write_to_FIFO(dev, mutex, periphAddr, isConfig, data, format='Hex'):
-    data_num = str_to_num(data, format)
-    # print(data_num)
-    if(data_num != -1):
-        # Convert integer packet to bytes object
-        data_b = data_num.to_bytes(3, 'little')
-        # Write to the FIFO
-        mutex.acquire() # Acquire the I/O threading lock (blocking)
-        num_bytes_written = ftdi.write_data_packet(dev, peripheral_addr=periphAddr, data=data_b)
-        mutex.release() # Release the threading lock
-        return data_b, num_bytes_written
+def write_to_FIFO(periphAddr, isConfig, data, format='Hex'):
+    if(format!='Str'):
+        data_num = str_to_num(data, format)
+        # print(data_num)
+        if(data_num != -1):
+            # Convert integer packet to bytes object
+            data_b = data_num.to_bytes(3, 'little')
+            # Write to the FIFO
+            mutex.acquire() # Acquire the I/O threading lock (blocking)
+            num_bytes_written = lycanDev.write_data(periphAddr, data_b)
+            mutex.release() # Release the threading lock
+            return data_b, num_bytes_written
+        else:
+            return None, -1
     else:
-        return None, -1
+        # Convert string to bytes object
+        data_b = data.encode()
+        # Write to FIFO
+        mutex.acquire()
+        print('Acquired lock to write')
+        num_bytes_written = lycanDev.write_data(periphAddr, data_b)
+        mutex.release()
+        print('Released lock to write')
+        return data_b, num_bytes_written
+    
+def CallBackFunction(CallbackType: int, PipeID_GPIO0: int | bool, Length_GPIO1: int | bool):
+    print('Callback called')
+    if(CallbackType == PyD3XX.E_FT_NOTIFICATION_CALLBACK_TYPE_DATA):
+        print("CBF: You have " + str(Length_GPIO1) + " bytes to read at pipe " + hex(PipeID_GPIO0) + "!")
+        mutex.acquire()
+        print('Acquired lock to read')
+        # For each packet received
+        for i in range(int(Length_GPIO1/4)):
+            isConfig, pId, data = lycanDev.read_packet()
+            if(len(data) > 0):
+                gui.peripheralTabs[pId].displayRXData(data.decode(), True)
+        mutex.release()
+        print('Released lock to read')
+    return None
 
 # Thread for reading from FIFO (Pauses if writing)
-def read_from_FIFO(dev, GUI, mutex):
-    while(True):
-        mutex.acquire() # Acquire the I/O threading lock (blocking)
-        data_in = ftdi.read_packet(dev, suppressErrors=True)[1] # Read from the FIFO
-        mutex.release() # Release the threading lock
-        # print('Read:', data_in)
-        if(data_in != None):
-            # Send the read packet to the corresponding peripheral tab
-            periphIndex = int.from_bytes(data_in, 'little') >> 29
-            if(GUI.peripheralTabs[periphIndex]):
-                data = data_in[0:3]
-                GUI.peripheralTabs[periphIndex].displayRXData(str(hex(int.from_bytes(data, 'little'))), True)
-        # Tell the main thread we are sleeping
-        time.sleep(0.1) # Sleep for 100 ms (CHANGE LATER???)
+# def read_from_FIFO(lycanDev, GUI, mutex):
+#     while(True):
+#         mutex.acquire() # Acquire the I/O threading lock (blocking)
+#         read_res = lycanDev.read_packet()
+#         mutex.release() # Release the threading lock
+#         if(read_res[2] != None and len(read_res[2]) > 0):
+#             # Send the read packet to the corresponding peripheral tab
+#             periphIndex = read_res[1]
+#             data_in = read_res[2]
+#             if(GUI.peripheralTabs[periphIndex]):
+#                 GUI.peripheralTabs[periphIndex].displayRXData(data_in.decode()[::-1], True)
+#         # Tell the main thread we are sleeping
+#         time.sleep(0.100) # Sleep for 100 ms (CHANGE LATER???)
     
 # Peripheral Tab Class #
 class PeripheralTab(QWidget):
 
     # Constructor
-    def __init__(self, mutex, dev, peripheralIndex=0):
+    def __init__(self, peripheralIndex=0):
         super().__init__()
 
-        self.mutex = mutex
-        self.dev = dev
         self.pIndex = peripheralIndex
         self.logFile = 0 # No log file yet
         self.logging = False
@@ -116,7 +140,7 @@ class PeripheralTab(QWidget):
         self.txDataField = QLineEdit()
         self.txDataField.returnPressed.connect(self.onSubmitTX)
         self.txTypeCombo = QComboBox()
-        self.txTypeCombo.addItems(['Hex', 'Bin', 'Dec'])
+        self.txTypeCombo.addItems(['Str', 'Hex', 'Bin', 'Dec'])
         self.txSubmitButton = QPushButton('Send')
         self.txSubmitButton.clicked.connect(self.onSubmitTX)
 
@@ -147,7 +171,7 @@ class PeripheralTab(QWidget):
 
     # On request to send to FIFO
     def onSubmitTX(self):
-        res = write_to_FIFO(self.dev, self.mutex, self.pIndex, False, self.txDataField.text(), self.txTypeCombo.currentText())
+        res = write_to_FIFO(self.pIndex, False, self.txDataField.text(), self.txTypeCombo.currentText())
         if(res[1] == -1):
             message = 'Issue with input (may have too many bytes, or formatting is wrong - use binary or hex), try again.'
             self.errorLabel.setText(message)
@@ -158,9 +182,9 @@ class PeripheralTab(QWidget):
             self.errorLabel.setText('') # Reset the error text box
             # self.txDataField.setText('') # Reset the TX field text
             self.rxDataLabel.append(f'\tWrote {res[1]} bytes to the FIFO.\n')
-            self.logData(res[0], )
+            self.logData(res[0], False)
 
-    def displayRXData(self, data):
+    def displayRXData(self, data, isRx):
         self.rxDataLabel.append('Read: '+data+'\n')
         self.logData(data, True)
 
@@ -200,11 +224,8 @@ class PeripheralTab(QWidget):
 class LycanWindow(QTabWidget):
 
     # Constructor
-    def __init__(self, threadQueue, dev, numPeripherals):
+    def __init__(self, numPeripherals):
         super().__init__()
-
-        self.threadQueue = threadQueue
-        self.dev = dev
 
         self.setWindowTitle("Lycan Universal Interface")
         self.setGeometry(200, 200, WINDOW_WIDTH, WINDOW_HEIGHT)
@@ -212,7 +233,7 @@ class LycanWindow(QTabWidget):
         # Tab Setup #
         self.peripheralTabs = [0]*numPeripherals
         for i in range(0, numPeripherals):
-            self.peripheralTabs[i] = PeripheralTab(threadQueue, dev, i)
+            self.peripheralTabs[i] = PeripheralTab(i)
             self.peripheralTabs[i].initComponents()
             self.addTab(self.peripheralTabs[i], f'Peripheral {i}')
             print(f'Added Periph Tab #{i}')
@@ -221,44 +242,23 @@ class LycanWindow(QTabWidget):
         self.show()
 
     def closeEvent(self, event):
-        self.dev.close()
-
+        mutex.acquire()
+        lycanDev.close()
+        mutex.release()
 
 # Main #
 if __name__ == '__main__':
 
-    # Create a queue for message passing between main thread and RX thread
-    threadQueue = queue.Queue(maxsize=1)
-    threadQueue.put(True)
+    # Instantiate Lycan device
+    lycanDev = lycan.Lycan()
+    status = PyD3XX.FT_SetNotificationCallback(lycanDev.ftdiDev, CallBackFunction)
+    if status != PyD3XX.FT_OK:
+        raise Exception('FAILED TO SET CALLBACK FUNCTION OF DEVICE 0: ABORTING')
 
-    # Get the connected FTDI device
-    numDevices = ftd3xx.createDeviceInfoList()
-    devices = ftd3xx.getDeviceInfoList()
-    if(devices != None):
-        # Create a ftd3xx device instance
-        dev = ftd3xx.create(devices[0].SerialNumber, FT_OPEN_BY_SERIAL_NUMBER)
-        devInfo = dev.getDeviceInfo()
-        dev.setPipeTimeout(0x02, 500)
-        dev.setPipeTimeout(0x82, 500)
-        dev.setSuspendTimeout(0)
-        # Print some info about the device
-        print('\nDevice Info:')
-        print(f'\tType: {devInfo["Type"]}')
-        print(f'\tID: {devInfo["ID"]}')
-        print(f'\tDescr.: {devInfo["Description"]}')
-        print(f'\tSerial Num: {devInfo["Serial"]}')
-    else:
-        message = 'Error: No devices detected. Exiting...'
-        sys.exit()
-
+    # Create mutex
     mutex = threading.Lock()
 
     app = QApplication(sys.argv)
-    gui = LycanWindow(mutex, dev, 8)
-
-    read_t = threading.Thread(target=read_from_FIFO, args=(dev, gui, mutex), daemon=True)
-
-    # Start the reading thread
-    read_t.start()
+    gui = LycanWindow(8)
 
     sys.exit(app.exec())
