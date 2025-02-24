@@ -166,8 +166,30 @@
 - All: Meet with Carsten (15 min)
 - Matthew S: Work on testing C++ software, notifications (3 hrs)
 
-
-## 2/14/25
+## 2/14
 - Matthew S: Work on C++ GUI using QT Creator (3 hrs)
 - Gilon: integrated LA into template for peripherals (1 hr)
 - Gilon: debugged issue with git push (1 hr)
+
+## 2/15
+- Matthew S: Work on QT Creator project for making C++ GUI (3 hrs)
+
+## 2/17
+- Matthew S: Test C++ code in the lab, using UART (2 hrs)
+
+## 2/18
+- All: Meet to work on UART peripheral and software (2 hrs)
+
+## 2/19
+- Matthew S: Test Python and C++ code further in lab, check for packet drops (1 hr)
+
+## 2/20
+- All: Meet to finish up UART peripheral receiving and software (switch back to Python) (2 hrs)
+- Matthew S: Test new Python module and create simple Lycan API using it (2 hrs)
+- Matthew S: Finish LLC board PCB layout and order boards (2 hrs)
+
+## 2/21
+- All: Work on Beta test plan and documentation (_ hrs)
+
+## 2/24
+- All: Finish Beta Build Report and video (_ hrs)
