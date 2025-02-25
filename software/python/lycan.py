@@ -30,7 +30,15 @@ class Lycan():
         PyD3XX.FT_SetPipeTimeout(Device, self.inPipe, 500)
         PyD3XX.FT_SetPipeTimeout(Device, self.outPipe, 500)
         PyD3XX.FT_SetSuspendTimeout(Device, 0)
+        self.flush_in_pipe()
         print("Device (index, serial, desc): 0, " + Device.SerialNumber + ", " + Device.Description)
+
+    def flush_in_pipe(self):
+        # Flush the in pipe
+        try:
+            self.read_raw_bytes(1024)
+        except:
+            pass
 
     def read_raw_bytes(self, length=4):
         # Read data from specified pipe
@@ -81,7 +89,7 @@ class Lycan():
         if(status != PyD3XX.FT_OK):
             raise Exception(f'Error with writing. Status Code {status}')
         elif(numBytesTransferred != len(raw)):
-            raise Exception(f'Error with writing. Tried to write {len(raw)} bytes, but only wrote {bytesWrote}.')
+            raise Exception(f'Error with writing. Tried to write {len(raw)} bytes, but only wrote {numBytesTransferred}.')
         return numBytesTransferred
 
     def write_data(self, peripheral_addr, data):
