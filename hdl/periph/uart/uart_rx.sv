@@ -31,14 +31,8 @@ module uart_rx (
   logic first_edge_r;
   logic [3:0] trigger_cnt_r;
 
-  always_comb begin
-    //detect first falling edge of rx line
-    if (~rx && first_edge_r == 0) begin
-      first_edge_r = '1;
-    end
-  end
 
-  always_ff @(posedge clk or posedge rst) begin
+  always @(posedge clk or posedge rst) begin
     if (rst) begin
       st_r <= S_WAIT;
       first_edge_r <= '0;
@@ -47,6 +41,11 @@ module uart_rx (
     end else begin
 
       trigger_sample_r <= '0;
+
+      //detect first falling edge of rx line
+      if (~rx && first_edge_r == 0) begin
+        first_edge_r = '1;
+      end
 
       case (st_r)
         S_WAIT: begin
