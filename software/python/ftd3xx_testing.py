@@ -1,8 +1,9 @@
 import ftd3xx
 from ftd3xx.defines import *
-import time, sys
+import time, sys, threading
 import ftd3xx_functions as fifo
 import ctypes as c
+import ftd3xx._ftd3xx_win32 as _ft
 
 def str_to_num(inStr, isHex):
     res = 0
@@ -35,11 +36,12 @@ if(devices != None):
     dev = ftd3xx.create(devices[0].SerialNumber, FT_OPEN_BY_SERIAL_NUMBER)
     devInfo = dev.getDeviceInfo()
     bUSB3 = dev.getDeviceDescriptor().bcdUSB >= 0x300
-    dev.setPipeTimeout(0x02, 100)
-    dev.setPipeTimeout(0x82, 100)
+    dev.setPipeTimeout(0x02, 3000)
+    dev.setPipeTimeout(0x82, 3000)
     dev.setSuspendTimeout(0)
-    # dev.setPipeTimeout(0x02, 3000)
-    # dev.setPipeTimeout(0x82, 3000)
+    dev.abortPipe(0x82) # Flush the in pipe
+    dev.flushPipe(0x82)
+    # fifo.lycan_flush_in_pipe(dev)
     # Print some info about the device
     print('Device Info:')
     print(f'Type: {devInfo["Type"]}')
@@ -50,31 +52,30 @@ if(devices != None):
 else:
     raise Exception('Error: No devices detected. Exiting...')
 
+read_t = threading.Thread(target=read_thread, args=(eventCondition, dev), daemon=True)
+read_t.start()
+
 # Try to send data to the FIFO
 numBytesWritten = 0
-# numBytesWritten += send_data_packet(dev, pipe=0x02, peripheral_addr=0, data=b'ABC')
-data = b'\x00\x11\x22\x33\x44\x55\x66\x77'
-# data = (0x0C0A0B0C00110011AABBCCDD).to_bytes(12, 'little')
-# data = (0x0C0A0B0C00110011).to_bytes(8, 'little')
-print(f'\nData to write:', data.hex())
 
 # Write
-size = 8
 transferred = 0
-# fifo.send_raw_data(dev, data=data)
-t = dev.writePipe(0x02, data, len(data))
-print('transferred ', t, 'bytes')
+# t = fifo.write_raw_bytes(dev, 0x02, b'\x0F\x12\x34\x56')
+# t += fifo.write_raw_bytes(dev, 0x02, b'\x0F\x12\x34\x56')
+# t = dev.writePipe(0x02, b'\x0F\x12\x34\x56', 4)
+# t += dev.writePipe(0x02, b'\x0F\x12\x34\x56', 4)
+t = fifo.write_data_packet(dev, 0, b'\x12\x34\x56')
+t += fifo.write_data_packet(dev, 0, b'\x12\x34\x56')
+t += fifo.write_data(dev, 0, b'\x78\x9A\xBC\xDE\xEF\xFF')
+print('Wrote ', t, 'bytes')
 
 # Read
-buffread = b''
-for i in range(1):
-    buffread = fifo.read_raw_bytes(dev, 0x82, 4)
-    print(buffread)
-    print(dev.getLastError())
-print(f'\n Data read:', buffread.hex())
+data_read = b''
+for i in range(4):
+    buffread = fifo.read_packet(dev)[2]
+    if(buffread != None):
+        data_read += buffread
+    print('Status: ', dev.getLastError())
+print('\n Data read:', data_read.hex())
 
-# Compare write/read data
-if(data == buffread):
-    print('******************************   The loopback worked! Yay!   ******************************')
-else:
-    print('Loopback Failed :(')
+time.sleep(10)

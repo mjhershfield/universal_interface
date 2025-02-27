@@ -26,12 +26,10 @@ module ft601_controller (
     output logic [3:0] be_out,
     output logic be_tri,
 
-    // Whether valid data is coming from the arbiter
-    input  logic periph_data_available,
+    input logic lycan_in_full,
+    input logic lycan_out_empty,
     // Whether peripheral FIFOs have been initialized
-    input  logic periph_ready,
-    // Whether we are currently reading data from the arbiter
-    output logic read_periph_data
+    input  logic periph_ready
 );
 
   typedef enum logic [1:0] {
@@ -56,7 +54,6 @@ module ft601_controller (
 
   always_comb begin
 
-    read_periph_data = '0;
     usb_outen_l = 1;
     usb_rden_l = 1;
     usb_wren_l = 1;
@@ -77,7 +74,7 @@ module ft601_controller (
 
       read: begin
         usb_outen_l = 1'b0;
-        usb_rden_l = usb_rx_empty;
+        usb_rden_l = ~(~usb_rx_empty & ~lycan_in_full);
         rd_data_valid = &be_in;
 
         // data_o = usb_data_in;
@@ -88,10 +85,7 @@ module ft601_controller (
       end
 
       write: begin
-        usb_wren_l = ~periph_data_available;
-
-        // TODO: Poor assumption?
-        read_periph_data = periph_data_available;
+        usb_wren_l = lycan_out_empty;
 
         if (usb_rx_empty && usb_tx_full) next_state = init;
         else if (!usb_rx_empty) next_state = init_read;

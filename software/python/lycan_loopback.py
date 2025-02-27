@@ -56,17 +56,11 @@ def main(loopCount):
     for run in range(loopCount):
         # Try to send data to the FIFO
         data = random.getrandbits(24).to_bytes(3, 'little')
-        rawPacket = pId << 32-3 # address
-        rawPacket += 0 << 32-4 # config flag bit
-        rawPacket += 3 << 32-6 # num valid bytes
-        rawPacket += 3 << 32-8 # don't cares (set to 1 for now)
-        rawPacket += int.from_bytes(data, byteorder='little')
-
         fifo.write_data_packet(device=dev, pipe=0x02, peripheral_addr=pId, data=data)
-        isConfig, readData = fifo.read_packet(device=dev, pipe=0x82)
+        isConfig, periphAddr, readData = fifo.read_packet(device=dev, pipe=0x82)
 
         # Compare write/read data
-        if(readData != None and rawPacket == int.from_bytes(readData, 'little')):
+        if(readData != None and data == readData and pId == periphAddr):
             successCount += 1
             print('******************************   The loopback worked! Yay!   ******************************')
         else:

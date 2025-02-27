@@ -22,6 +22,10 @@ module uart (
     output logic idle
 );
 
+  localparam int CLK_RATIO = 5208;
+  // localparam int CLK_RATIO = 1;
+  localparam logic [31:0] READ_TIMEOUT = 32'(CLK_RATIO * 10 * 100);
+
   logic uart_tx_clk, uart_tx_busy, uart_tx_rden;
   logic [7:0] uart_tx_data;
   logic tx_split_wren, tx_split_rden, tx_split_valid;
@@ -30,6 +34,9 @@ module uart (
   logic rx_comb_wren, rx_comb_rden;
   logic [23:0] rx_comb_dout;
   logic [ 1:0] rx_comb_valid_bytes;
+
+  logic [31:0] rx_cycle_counter_r;
+  logic force_read;
 
   uart_tx tx (
       .clk(uart_tx_clk),
@@ -48,8 +55,7 @@ module uart (
       .clk(clk),
       .rst(rst),
       .div_clk(uart_tx_clk),
-      .max_count(24'd5208)
-      // .max_count(24'd1)
+      .max_count(24'(CLK_RATIO))
   );
 
   uart_reg24to8 tx_splitter (
@@ -81,7 +87,7 @@ module uart (
       .rx(in[0]),
       .rx_busy(uart_rx_busy),
       .rx_data(uart_rx_data),
-      // .rx_full(uart_rx_full),
+      // .rx_full(uart_rx_full), // not implemented in uart rx periph
       // .rx_error(uart_rx_error),
       .rx_done(uart_rx_done),
       .num_data_bits(4'h8),
@@ -110,16 +116,29 @@ module uart (
       // .done()
   );
 
+  // TODO: trigger a read from the combiner if nothing has been received for a long time.
+  always_ff @(posedge clk or posedge rst) begin
+    if (rst) begin
+      rx_cycle_counter_r <= READ_TIMEOUT;
+    end else begin
+      if (rx_cycle_counter_r == '0 || rx_comb_valid_bytes == 2'd3) begin
+        rx_cycle_counter_r <= READ_TIMEOUT;
+      end else if (rx_comb_valid_bytes != 2'b0) begin
+        rx_cycle_counter_r <= rx_cycle_counter_r - 1;
+      end
+    end
+  end
+  assign force_read = (rx_cycle_counter_r == '0);
+
   assign uart_comb_wren = uart_rx_done;
   assign rx_data = {1'b0, rx_comb_valid_bytes, 2'b0, rx_comb_dout};
 
   assign tx_split_wren = ~tx_split_valid & ~tx_empty;
   assign tx_rden = tx_split_wren;
-  // band aid fix for now. in the future, we need a way to decide when to send partially filled packets.
-  assign rx_comb_rden = rx_comb_valid_bytes == 2'd3;
+  assign rx_comb_rden = (rx_comb_valid_bytes == 2'd3) | force_read;
   assign rx_wren = rx_comb_rden;
 
-    // General signals
+  // General signals
   assign idle = ~(uart_tx_busy | uart_rx_busy);
   assign out[3:1] = '0;
 

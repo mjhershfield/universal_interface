@@ -34,13 +34,13 @@ source <path to venv>/bin/activate
 ## Install the required modules
 ### On Windows (CMD):
 ```
-cd <path to Github Repo>/software/
+cd <path to Github Repo>/software/python/
 py -m pip install -r requirements.txt
 ```
 
 ### On Linux (bash):
 ```
-cd <path to Github Repo>/software/
+cd <path to Github Repo>/software/python/
 python3 -m pip install -r requirements.txt
 ```
 
