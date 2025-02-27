@@ -46,6 +46,7 @@ module uart_rx (
       if (~rx && first_edge_r == 0) begin
         first_edge_r = '1;
       end
+      
 
       case (st_r)
         S_WAIT: begin
