@@ -192,4 +192,12 @@
 - All: Work on Beta test plan and documentation (_ hrs)
 
 ## 2/24
-- All: Finish Beta Build Report and video (_ hrs)
+- All: Finish Beta Build Report and video (2 hrs)
+
+## 2/25
+- All: Stakeholder meeting (15 min)
+- Gilon: work to integrate GPIO periph (3.5 hr)
+
+## 2/27
+- All: Stakeholder meeting (15 min)
+- Gilon: continue work to integrate GPIO periph (2 hr)
