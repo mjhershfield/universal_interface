@@ -55,12 +55,12 @@ module lycan (
   (* mark_debug = "true" *) logic be_tri;
   (* mark_debug = "true" *) logic lycan_rd, lycan_wr;
   (* mark_debug = "true" *) logic [31:0] lycan_in, lycan_out;
-  (* mark_debug = "true" *) logic in_fifo_empty, out_fifo_empty;
+  (* mark_debug = "true" *) logic in_fifo_empty, in_fifo_full, out_fifo_empty, out_fifo_full;
 
-    // 0 = output, 1 = input
-    logic [num_dut_pins-1:0] dut_pins_in;
-    logic [num_dut_pins-1:0] dut_pins_out;
-    logic [num_dut_pins-1:0] dut_pins_tri;
+  // 0 = output, 1 = input
+  logic [num_dut_pins-1:0] dut_pins_in;
+  logic [num_dut_pins-1:0] dut_pins_out;
+  logic [num_dut_pins-1:0] dut_pins_tri;
   localparam periph_type_t periph_list[8] = {
     PERIPH_UART,
     // PERIPH_LOOPBACK,
@@ -83,12 +83,12 @@ module lycan (
   assign rst = ~rst_l;
 
   // Hard code dut pin outputs to 0 = UART TX, 1 = UART RX
-    // 0 = output, 1 = input
-    assign dut_pins_out = {15'b0, periph_outs[0]};
-    assign periph_ins[0] = dut_pins_in[1];
-    assign dut_pins_tri = 16'hFFFE;
-    // assign dut_pins_out = 16'b0;
-    // assign dut_pins_tri = 16'hFFFF;
+  // 0 = output, 1 = input
+  assign dut_pins_out = {15'b0, periph_outs[0]};
+  assign periph_ins[0] = dut_pins_in[1];
+  assign dut_pins_tri = 16'hFFFE;
+  // assign dut_pins_out = 16'b0;
+  // assign dut_pins_tri = 16'hFFFF;
 
   // Tristate buffer for DUT pins
   genvar dut_pin;
@@ -116,8 +116,8 @@ module lycan (
       .be_in(be_in),
       .be_out(be_out),
       .be_tri(be_tri),
-      .periph_data_available(~out_fifo_empty),
-      // .read_periph_data(read_periph_data),
+      .lycan_in_full(in_fifo_full),
+      .lycan_out_empty(out_fifo_empty),
       .periph_ready(&periph_readys)
   );
 
@@ -151,7 +151,7 @@ module lycan (
       .wr_en(~usb_rden_l & periph_tx_valid),  // input wire wr_en
       .rd_en(lycan_rd),                       // input wire rd_en
       .dout (lycan_in),                       // output wire [31 : 0] dout
-      // .full       (full),         // output wire full
+      .full (in_fifo_full),                   // output wire full
       .empty(in_fifo_empty)                   // output wire empty
       // .wr_rst_busy(wr_rst_busy),  // output wire wr_rst_busy
       // .rd_rst_busy(rd_rst_busy)   // output wire rd_rst_busy
@@ -165,7 +165,7 @@ module lycan (
       .wr_en(lycan_wr),       // input wire wr_en
       .rd_en(~usb_wren_l),    // input wire rd_en
       .dout (usb_data_out),   // output wire [31 : 0] dout
-      // .full       (full),         // output wire full
+      .full (out_fifo_full),  // output wire full
       .empty(out_fifo_empty)  // output wire empty
       // .wr_rst_busy(wr_rst_busy),  // output wire wr_rst_busy
       // .rd_rst_busy(rd_rst_busy)   // output wire rd_rst_busy
