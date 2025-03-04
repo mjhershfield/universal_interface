@@ -4,7 +4,7 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
     QApplication, QLabel, QWidget, QLineEdit, QFormLayout, 
     QPushButton, QHBoxLayout, QCheckBox, QComboBox, QTextEdit,
-    QTabWidget
+    QTabWidget, QDialog, QDialogButtonBox, QVBoxLayout
 )
 from PyQt6.QtGui import QIntValidator, QColor, QCursor
 import lycan
@@ -49,7 +49,7 @@ def parse_input(inStr, format):
         res.to_bytes(numBytes, 'little')
     return res # Return the result
     
-def write_to_FIFO(periphAddr, isConfig, data, format='Hex'):
+def write_to_FIFO(periphAddr, data, format='Hex'):
     try:
         # Parse user input
         data_b = parse_input(data, format)
@@ -63,6 +63,21 @@ def write_to_FIFO(periphAddr, isConfig, data, format='Hex'):
     mutex.release()
     print('Write mutex released')
     return data_b, num_bytes_written
+
+def config_to_FIFO(periphAddr, isWrite, regAddr, regVal):
+    try:
+        # Parse user input (as Hex)
+        data_b = parse_input(regAddr, 'Hex')
+        # Write to FIFO
+        print('Write (config) mutex acquired')
+        mutex.acquire()
+        num_bytes_written = lycanDev.write_config_command(periphAddr, isWrite, regAddr, regVal)
+    except:
+        mutex.release() # Make sure mutex is released, even on write error
+        raise
+    mutex.release()
+    print('Write (config) mutex released')
+    return data_b, num_bytes_written
     
 def CallBackFunction(CallbackType: int, PipeID_GPIO0: int | bool, Length_GPIO1: int | bool):
     print('Callback called')
@@ -75,12 +90,42 @@ def CallBackFunction(CallbackType: int, PipeID_GPIO0: int | bool, Length_GPIO1: 
             try:
                 isConfig, pId, data = lycanDev.read_packet()
                 if(len(data) > 0):
-                    gui.peripheralTabs[pId].displayRXData(data.decode(), True)
+                    if(isConfig):
+                        gui.peripheralTabs[pId].storeRegVal(data.encode())
+                    else:
+                        gui.peripheralTabs[pId].displayRXData(data.decode(), True)
             except Exception as e:
                 gui.peripheralTabs[pId].errorLabel.setText(f'Error with reading in callback: {e}')
         mutex.release()
         print('Released lock to read')
     return None
+
+
+# Peripheral Config Register Dialog Class #
+class ConfigForm(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Enter Information")
+        self.addr_field = QLineEdit()
+        self.value_field = QLineEdit()
+
+        form_layout = QFormLayout()
+        form_layout.addRow('Register Address:', self.addr_field)
+        form_layout.addRow('Register Value:', self.value_field)
+
+        saveButton = QPushButton('Save')
+        buttonBox = QDialogButtonBox()
+        buttonBox.addButton(saveButton, QDialogButtonBox.ButtonRole.AcceptRole)
+
+        main_layout = QVBoxLayout()
+        main_layout.addLayout(form_layout)
+        main_layout.addWidget(buttonBox)
+
+        self.setLayout(main_layout)
+    
+    def get_inputs(self):
+        return (self.addr_field.text(), self.value_field.text())
+
     
 # Peripheral Tab Class #
 class PeripheralTab(QWidget):
@@ -99,6 +144,10 @@ class PeripheralTab(QWidget):
         self.logButton.setStyleSheet('background-color: green;')
         self.logButton.setFixedWidth(120)
         self.logButton.clicked.connect(self.createLogFile)
+
+        self.configButton = QPushButton('Peripheral Config')
+        self.configButton.setFixedWidth(120)
+        self.configButton.clicked.connect(self.openConfigDialog)
         
         self.rxDataLabel = QTextEdit()
         self.rxDataLabel.setReadOnly(True)
@@ -125,6 +174,10 @@ class PeripheralTab(QWidget):
 
         # Layout Setup #
 
+        headerRowLayout = QHBoxLayout()
+        headerRowLayout.addWidget(self.logButton, alignment=Qt.AlignmentFlag.AlignLeft)
+        headerRowLayout.addWidget(self.configButton, alignment=Qt.AlignmentFlag.AlignRight)
+
         txConfigRowLayout = QHBoxLayout()
         txConfigRowLayout.addWidget(self.configCheckbox, alignment=Qt.AlignmentFlag.AlignRight)
         txConfigRowLayout.setSpacing(10)
@@ -136,7 +189,7 @@ class PeripheralTab(QWidget):
         txRowLayout.addWidget(self.txSubmitButton)
 
         layout = QFormLayout()
-        layout.addRow(self.logButton)
+        layout.addRow(headerRowLayout)
         layout.addRow('RX Data:', self.rxDataLabel)
         layout.addRow('', txConfigRowLayout)
         layout.addRow('TX Data:', txRowLayout)
@@ -167,6 +220,9 @@ class PeripheralTab(QWidget):
         print('Displaying text')
         self.rxDataLabel.insertPlainText(data)
         self.logData(data, True)
+
+    def storeRegVal(self, data):
+        print(data) # TODO
 
     def createLogFile(self):
         if(not self.logging):
@@ -199,6 +255,13 @@ class PeripheralTab(QWidget):
             except Exception as e:
                 print(e)
                 self.errorLabel.setText('Error writing to log file!')
+
+    def openConfigDialog(self):
+        form = ConfigForm(self)
+        result = form.exec() # Shows the dialog and waits for user interaction
+        if result == QDialog.accepted:
+            addr, val = form.get_inputs()
+            
 
 # Main Window Class #
 class LycanWindow(QTabWidget):

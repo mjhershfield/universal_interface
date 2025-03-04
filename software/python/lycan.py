@@ -100,6 +100,26 @@ class Lycan():
             self.write_raw_bytes(raw=packet)
             data = data[3:]
         return
+
+    def write_config_command(self, peripheral_addr=0, write=True, reg_addr=0, reg_val=0):
+        # Check that the peripheral address is within the correct range
+        if(peripheral_addr < 0 or peripheral_addr > 7):
+            raise Exception('Error: The peripheral address is out of range (0 to 7)')
+        # Check that register address is 3 bits
+        if(reg_addr < 0 or reg_addr > 7):
+            raise Exception('Error: Register address invalid (must be 0-7)')
+        # Check that register value is 3 bytes max
+        if(reg_val < 0 or reg_val > 16777215):
+            raise Exception('Error: Invalid register value (max of 24 bits)')
+        # Construct the packet
+        packet = peripheral_addr << 32 # address
+        packet += 1 << 29 # config flag bit
+        packet += write << 28 # read/write bit
+        packet += reg_addr << 27
+        packet += reg_val
+        # Transmit the packet
+        numBytesTransferred = self.write_raw_bytes(packet.to_bytes(4, 'little'))
+        return numBytesTransferred
         
     def close(self):
         status = PyD3XX.FT_Close(self.ftdiDev)
