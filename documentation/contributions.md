@@ -207,6 +207,9 @@
 - All: Meet to discuss and test UART receive (2 hr)
 - Matthew S: Continue testing LLC board, work on UART software (1 hr)
 
+## 3/3
+- Gilon: continue work to integrate GPIO periph (1 hr)
+
 ## 3/4
 - All: Meet to work on UART RX (2 hr)
 

@@ -4,7 +4,7 @@
 
 import lycan_globals::*;
 
-module reconfig_periph_wrapper (
+module GPIO (
     input logic clk,
     input logic rst,
 
@@ -34,6 +34,8 @@ module reconfig_periph_wrapper (
     .pin_vals(in),
     .data_valid(rx_wren)
 );  
+
+assign tx_rden = 1'b0;
 
 
 

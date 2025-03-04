@@ -13,6 +13,8 @@ module periph #(
     output logic [outputs_per_peripheral-1:0] out,
     // For now, only need to tristate a subset of all outputs
     output logic [tristates_per_peripheral-1:0] tristate,
+    
+    inout logic [num_dut_pins-1:0] dut_pins, //only for GPIO periph
 
     // FIFO for data being received from the USB bus
     input logic [usb_packet_width-1:0] tx_data,
@@ -141,6 +143,24 @@ module periph #(
             .idle(idle)
         );
       end
+
+      PERIPH_GPIO: begin : gen_gpio
+        GPIO gpio_periph (
+          .clk(clk),
+          .rst(rst),
+          .in(dut_pins),
+          .out(out), //not used
+          .tristate(tristate), //not used
+          .tx_data('0), 
+          .tx_empty(tx_fifo_empty), //not used
+          .tx_rden(tx_fifo_rden), //not used
+          .rx_data(rx_fifo_din),
+          .rx_wren(rx_fifo_wren),
+          .rx_full(rx_fifo_full), //not used
+          .idle(idle)//not used
+
+        );
+        end
     endcase
   endgenerate
 

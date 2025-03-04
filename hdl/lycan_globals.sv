@@ -12,6 +12,7 @@ package lycan_globals;
 
   typedef enum logic [2:0] {
     PERIPH_LOOPBACK,
-    PERIPH_UART
+    PERIPH_UART,
+    PERIPH_GPIO
   } periph_type_t;
 endpackage

@@ -1,11 +1,11 @@
 module la_top #(
     parameter width = 32
 )(
-    input logic clk, rst,
-    input logic [width-1:0] packet_in,
-    output logic [width-1:0] packet_out,
-    input logic [15:0] pin_vals,
-    output logic data_valid
+    (* mark_debug = "true" *) input logic clk, rst,
+    (* mark_debug = "true" *) input logic [width-1:0] packet_in,
+    (* mark_debug = "true" *) output logic [width-periph_address_width-1:0] packet_out,
+    (* mark_debug = "true" *) input logic [15:0] pin_vals,
+    (* mark_debug = "true" *) output logic data_valid
 );
 
     logic go;
@@ -48,12 +48,12 @@ module la_top #(
 
         end else begin
             max_count <= 24'd7; //hardcoded to 16x  div
-            packet_out[31:29] <= 3'b000;
-            packet_out[28] <= 1'b0;
-            packet_out[27:26] <= 2'b10;
-            packet_out[25:24] <= 2'b00;
-            packet_out[23:16] <= '0;
-            packet_out[15:0] <= reads;
+            packet_out <= {1'b0, 2'b10, 2'b00, 8'h00, reads};
+            // packet_out[28] <= 1'b0;
+            // packet_out[27:26] <= 2'b10;
+            // packet_out[25:24] <= 2'b00;
+            // packet_out[23:16] <= '0;
+            // packet_out[15:0] <= reads;
             
             data_valid <= 1'b1 & div_clk_rising;
 

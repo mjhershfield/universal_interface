@@ -58,9 +58,9 @@ module lycan (
   (* mark_debug = "true" *) logic in_fifo_empty, in_fifo_full, out_fifo_empty, out_fifo_full;
 
   // 0 = output, 1 = input
-  logic [num_dut_pins-1:0] dut_pins_in;
-  logic [num_dut_pins-1:0] dut_pins_out;
-  logic [num_dut_pins-1:0] dut_pins_tri;
+  (* mark_debug = "true" *)  logic [num_dut_pins-1:0] dut_pins_in;
+  (* mark_debug = "true" *)  logic [num_dut_pins-1:0] dut_pins_out;
+  (* mark_debug = "true" *)  logic [num_dut_pins-1:0] dut_pins_tri;
   localparam periph_type_t periph_list[8] = {
     PERIPH_UART,
     PERIPH_UART,
@@ -100,9 +100,9 @@ module lycan (
   genvar dut_pin;
   for (dut_pin = 0; dut_pin < num_dut_pins; dut_pin++) begin : gen_dut_pins_iobuf
     IOBUF dut_pins_iobuf (
-        .O (dut_pins_in[dut_pin]),
+        .O (dut_pins_in[dut_pin]), //coming from DUT
         .IO(dut_pins[dut_pin]),
-        .I (dut_pins_out[dut_pin]),
+        .I (dut_pins_out[dut_pin]), //going to DUT
         .T (dut_pins_tri[dut_pin])
     );
   end
@@ -212,27 +212,52 @@ module lycan (
 
   // Instantiate 8 loopback peripherals
   genvar periph_num;
-  for (periph_num = 0; periph_num < num_peripherals; periph_num++) begin : gen_peripherals
-    periph #(
-        .ADDRESS(3'(periph_num)),
-        .PERIPH_TYPE(periph_list[periph_num])
-    ) peripheral (
-        .clk(clk),
-        .rst(rst),
-        .in(periph_ins[periph_num*inputs_per_peripheral+:inputs_per_peripheral]),
-        .out(periph_outs[periph_num*outputs_per_peripheral+:outputs_per_peripheral]),
-        .tristate(periph_tristates[periph_num*tristates_per_peripheral+:tristates_per_peripheral]),
-        .tx_data(lycan_in),
-        .tx_valid(~in_fifo_empty),
-        .tx_full(periph_tx_fulls[periph_num]),
-        .rx_data(mux_options[periph_num]),
-        .rx_read(periph_rx_rdens[periph_num]),
-        .rx_empty(periph_rx_emptys[periph_num]),
-        .rx_almost_full(periph_rx_almost_fulls[periph_num]),
-        .rx_full(periph_rx_fulls[periph_num]),
-        .idle(periph_idles[periph_num]),
-        .ready(periph_readys[periph_num])
-    );
+  for (periph_num = 0; periph_num < num_peripherals; periph_num++) begin : gen_peripherals 
+    if(periph_num  == 0) begin
+        periph #(
+            .ADDRESS(3'(periph_num)),
+            .PERIPH_TYPE(periph_list[periph_num])
+        ) peripheral (
+            .clk(clk),
+            .rst(rst),
+            .in(),
+            .dut_pins(dut_pins_in), //only for GPIO periph
+            .out(),
+            .tristate(),
+            .tx_data(lycan_in),
+            .tx_valid(~in_fifo_empty),
+            .tx_full(periph_tx_fulls[periph_num]),
+            .rx_data(mux_options[periph_num]),
+            .rx_read(periph_rx_rdens[periph_num]),
+            .rx_empty(periph_rx_emptys[periph_num]),
+            .rx_almost_full(periph_rx_almost_fulls[periph_num]),
+            .rx_full(periph_rx_fulls[periph_num]),
+            .idle(periph_idles[periph_num]),
+            .ready(periph_readys[periph_num])
+        );        
+    end
+    else begin
+        periph #(
+            .ADDRESS(3'(periph_num)),
+            .PERIPH_TYPE(periph_list[periph_num])
+        ) peripheral (
+            .clk(clk),
+            .rst(rst),
+            .in(periph_ins[periph_num*inputs_per_peripheral+:inputs_per_peripheral]),
+            .out(periph_outs[periph_num*outputs_per_peripheral+:outputs_per_peripheral]),
+            .tristate(periph_tristates[periph_num*tristates_per_peripheral+:tristates_per_peripheral]),
+            .dut_pins(), //leave open for other peripherals.
+            .tx_data(lycan_in),
+            .tx_valid(~in_fifo_empty),
+            .tx_full(periph_tx_fulls[periph_num]),
+            .rx_data(mux_options[periph_num]),
+            .rx_read(periph_rx_rdens[periph_num]),
+            .rx_empty(periph_rx_emptys[periph_num]),
+            .rx_almost_full(periph_rx_almost_fulls[periph_num]),
+            .rx_full(periph_rx_fulls[periph_num]),
+            .idle(periph_idles[periph_num]),
+            .ready(periph_readys[periph_num])
+        );
   end
 
   // Decode grant signal to periph_rdens vector
@@ -244,6 +269,7 @@ module lycan (
       .out(decoded_grant)
   );
 
-  assign periph_rx_rdens = decoded_grant & ~periph_rx_emptys;
 
+  assign periph_rx_rdens = decoded_grant & ~periph_rx_emptys;
+end
 endmodule
