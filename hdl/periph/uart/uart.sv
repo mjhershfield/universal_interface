@@ -23,7 +23,7 @@ module uart (
 );
 
   localparam int CLK_RATIO = 5208;
-  // localparam int CLK_RATIO = 1;
+  // localparam int CLK_RATIO = 8;
   localparam logic [31:0] READ_TIMEOUT = 32'(CLK_RATIO * 10 * 100);
 
   logic uart_tx_clk, uart_tx_busy, uart_tx_rden;
@@ -51,7 +51,7 @@ module uart (
       .parity(PARITY_NONE)
   );
 
-  clk_div clock_divider (
+  clk_div tx_clock_divider (
       .clk(clk),
       .rst(rst),
       .div_clk(uart_tx_clk),
@@ -80,7 +80,13 @@ module uart (
       // .done()
   );
 
-  assign uart_rx_clk = uart_tx_clk;
+  clk_div rx_clock_divider (
+      .clk(clk),
+      .rst(rst),
+      .div_clk(uart_rx_clk),
+      .max_count(24'(CLK_RATIO / 8))
+  );
+
   uart_rx rx (
       .clk(uart_rx_clk),
       .rst(rst),
