@@ -201,3 +201,7 @@
 ## 2/27
 - All: Stakeholder meeting (15 min)
 - Gilon: continue work to integrate GPIO periph (2 hr)
+
+
+## 3/3
+- Gilon: continue work to integrate GPIO periph (1 hr)
