@@ -212,6 +212,7 @@
 
 ## 3/4
 - All: Meet to work on UART RX (2 hr)
+- Gilon and Adam: Debug integration of GPIO periph (2.5 hr)
 
 ## 3/5
 - Matthew S: Work on UART software & testing (2 hr)
