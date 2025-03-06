@@ -207,3 +207,9 @@
 
 ## 3/4
 - Gilon and Adam: Debug integration of GPIO periph (2.5 hr)
+
+## 3/5
+- Gilon and Adam: Debug integration of periphs (7.5 hr)
+
+## 3/6
+- All: Debug integration of periphs and prep for beta presentation (3 hr)
