@@ -219,11 +219,13 @@
 - Gilon: Work on UART RX (2 hr)
 - Adam: Work on UART RX (2 hr)
 - Andres: Work on presentation (2 hr)
+- Gilon and Adam: Debug integration of periphs (7.5 hr)
 
 ## 3/6
 - Matthew S and Andres: Finish presentation (2 hr)
 - Matthew S: Work on UART testing and Arduino code for demo (1 hr)
 - Gilon and Adam: Work on UART RX (2 hr)
+- All: Debug integration of periphs and prep for beta presentation (3 hr)
 
 ## 3/7
 - Gilon, Matthew H, Adam: Work on UART RX (2 hr)
@@ -247,3 +249,4 @@
 - Matthew S and Gilon: Work on GPIO peripheral & testing (2 hr)
 - Matthew S: Work on GPIO peripheral software (graph) and more Python OOP (2 hr)
 - All: Work on Preliminary Report & Release Candidate Report (3 hr)
+- Gilon and Adam: Debug integration of GPIO periph (2.5 hr)
