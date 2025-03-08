@@ -33,6 +33,9 @@ class Lycan():
         self.flush_in_pipe()
         print("Device (index, serial, desc): 0, " + Device.SerialNumber + ", " + Device.Description)
 
+    def recreate_device(self):
+        self.__init__()
+
     def flush_in_pipe(self):
         # Flush the in pipe
         try:

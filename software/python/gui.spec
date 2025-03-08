@@ -4,7 +4,7 @@
 a = Analysis(
     ['gui.py'],
     pathex=[],
-    binaries=[('C:\\Users\\selfb\\Documents\\venvs\\lycan\\Lib\\site-packages\\ftd3xx\\FTD3XX.dll', '.')],
+    binaries=[],
     datas=[],
     hiddenimports=[],
     hookspath=[],
