@@ -1,11 +1,11 @@
 module la_top #(
     parameter width = 32
 )(
-    (* mark_debug = "true" *) input logic clk, rst,
-    (* mark_debug = "true" *) input logic [width-1:0] packet_in,
-    (* mark_debug = "true" *) output logic [width-periph_address_width-1:0] packet_out,
-    (* mark_debug = "true" *) input logic [15:0] pin_vals,
-    (* mark_debug = "true" *) output logic data_valid
+    input logic clk, rst,
+    input logic [width-1:0] packet_in,
+    (* mark_debug = "true" *)output logic [width-periph_address_width-1:0] packet_out,
+    input logic [15:0] pin_vals,
+    (* mark_debug = "true" *)output logic data_valid
 );
 
     logic go;
@@ -47,7 +47,7 @@ module la_top #(
             packet_out <= '0;
 
         end else begin
-            max_count <= 24'd7; //hardcoded to 16x  div
+            max_count <= 24'd1; //approx 1 read every 32sec
             packet_out <= {1'b0, 2'b10, 2'b00, 8'h00, reads};
             // packet_out[28] <= 1'b0;
             // packet_out[27:26] <= 2'b10;
@@ -69,3 +69,5 @@ Configuration Flag	28	0 = data for tx/rx
 Number of valid bytes	27-26	1-3 bytes in data field of this packet
 Reserved	25-24	Currently unused
 Data for peripheral	23-0	Up to 3 bytes of data*/
+
+// 0000 1000 0000 0000 1111 1111 1111 1111
