@@ -8,13 +8,13 @@ module lycan (
     // FTDI FT601 control signals
     inout logic [31:0] usb_data,
     inout logic [3:0] usb_be,
-    (* mark_debug = "true" *) input logic usb_tx_full,  // 0 = space available, 1 = full
-    (* mark_debug = "true" *) input logic usb_rx_empty,  // 0 = data available, 1 = empty
+    input logic usb_tx_full,  // 0 = space available, 1 = full
+    input logic usb_rx_empty,  // 0 = data available, 1 = empty
     input logic usb_siwu,  // TODO: constant pullup. can this be done in constraints?
-    (* mark_debug = "true" *) output logic usb_wren_l,
-    (* mark_debug = "true" *) output logic usb_rden_l,
-    (* mark_debug = "true" *) output logic usb_outen_l,
-    (* mark_debug = "true" *) output logic usb_rst_l,
+    output logic usb_wren_l,
+    output logic usb_rden_l,
+    output logic usb_outen_l,
+    output logic usb_rst_l,
     input logic usb_wakeup,  // bidirectional. as input, 0 = USB active, 1 = usb suspended.
     // as output, Drive low to send remote wakeup
     input logic [1:0] usb_gpio,  // TWO CONFIGURABLE GPIO. WHAT DO THEY DO?
@@ -41,7 +41,7 @@ module lycan (
   logic [inputs_per_peripheral*num_peripherals-1:0] periph_ins;
   logic [outputs_per_peripheral*num_peripherals-1:0] periph_outs;
   logic [tristates_per_peripheral*num_peripherals-1:0] periph_tristates;
-  // (* mark_debug = "true" *) logic [usb_packet_width-1:0] periph_tx_din;
+  // logic [usb_packet_width-1:0] periph_tx_din;
   logic [2:0] periph_grant;
   (* mark_debug = "true" *) logic [num_peripherals-1:0] decoded_grant;
   logic [usb_packet_width-1:0] arbiter_out;
@@ -51,16 +51,18 @@ module lycan (
 
   (* mark_debug = "true" *) logic [usb_packet_width-1:0] usb_data_in, usb_data_out;
   (* mark_debug = "true" *) logic usb_data_tri;
-  (* mark_debug = "true" *) logic [3:0] be_in, be_out;
-  (* mark_debug = "true" *) logic be_tri;
-  (* mark_debug = "true" *) logic lycan_rd, lycan_wr;
-  (* mark_debug = "true" *) logic [31:0] lycan_in, lycan_out;
-  (* mark_debug = "true" *) logic in_fifo_empty, in_fifo_full, out_fifo_empty, out_fifo_full;
+  logic [3:0] be_in, be_out;
+  logic be_tri;
+  logic lycan_rd, lycan_wr;
+  logic [31:0] lycan_in, lycan_out;
+  logic in_fifo_empty, in_fifo_full, out_fifo_empty, out_fifo_full;
+
+  (* mark_debug = "true" *)logic wr_rst_busy, rd_rst_busy; 
 
   // 0 = output, 1 = input
-  (* mark_debug = "true" *)  logic [num_dut_pins-1:0] dut_pins_in;
-  (* mark_debug = "true" *)  logic [num_dut_pins-1:0] dut_pins_out;
-  (* mark_debug = "true" *)  logic [num_dut_pins-1:0] dut_pins_tri;
+  (* mark_debug = "true" *)logic [num_dut_pins-1:0] dut_pins_in;
+   logic [num_dut_pins-1:0] dut_pins_out;
+   logic [num_dut_pins-1:0] dut_pins_tri;
   localparam periph_type_t periph_list[8] = {
     PERIPH_UART,
     PERIPH_UART,
@@ -127,6 +129,7 @@ module lycan (
       .periph_ready(&periph_readys)
   );
 
+
   // Tristate buffer for USB data bus
   genvar usb_bit;
   for (usb_bit = 0; usb_bit < usb_packet_width; usb_bit++) begin : gen_usb_iobuf
@@ -172,9 +175,9 @@ module lycan (
       .rd_en(~usb_wren_l),    // input wire rd_en
       .dout (usb_data_out),   // output wire [31 : 0] dout
       .full (out_fifo_full),  // output wire full
-      .empty(out_fifo_empty)  // output wire empty
-      // .wr_rst_busy(wr_rst_busy),  // output wire wr_rst_busy
-      // .rd_rst_busy(rd_rst_busy)   // output wire rd_rst_busy
+      .empty(out_fifo_empty),  // output wire empty
+       .wr_rst_busy(wr_rst_busy),  // output wire wr_rst_busy
+       .rd_rst_busy(rd_rst_busy)   // output wire rd_rst_busy
   );
 
   assign lycan_out = arbiter_out;
@@ -213,7 +216,7 @@ module lycan (
   // Instantiate 8 loopback peripherals
   genvar periph_num;
   for (periph_num = 0; periph_num < num_peripherals; periph_num++) begin : gen_peripherals 
-    if(periph_num  == 0) begin
+    if(periph_num  == 0) begin 
         periph #(
             .ADDRESS(3'(periph_num)),
             .PERIPH_TYPE(periph_list[periph_num])
