@@ -29,9 +29,14 @@ gui = None
 def parse_input(inStr, format):
     res = 0
     if(format=='Dec'): # String is in decimal
-        res = int(inStr)
+        try:
+            res = int(inStr)
+        except:
+            raise Exception('Parse error: Improper binary string')
     elif(format=='Bin'): # String is in binary
         for index, c in enumerate(inStr):
+            if(c != '0' and c != '1'):
+                raise Exception('Parse error: Improper binary string')
             res += (2**(23 - index)) * (ord(c) - 48)
     elif(format=='Hex'): # String is in hexadecimal
         for index, c in enumerate(inStr):
@@ -42,24 +47,29 @@ def parse_input(inStr, format):
                     res += (16**(5 - index)) * (ord(c.lower()) - 87)
             else:
                 raise Exception('Parse error: Improper hex string')
+    # Now convert integer to bytes (unless the format is string)
     if(format=='Str'):
         res = inStr.encode()
     else:
-        numBytes = (res.bit_length + 7) // 8 # Can only support unsigned numbers right now
-        res.to_bytes(numBytes, 'little')
+        numBytes = (res.bit_length() + 7) // 8 # Can only support unsigned numbers right now
+        res = res.to_bytes(numBytes, 'little')
     return res # Return the result
     
 def write_to_FIFO(periphAddr, data, format='Hex'):
     try:
         # Parse user input
         data_b = parse_input(data, format)
+    except:
+        raise
+    try:
         # Write to FIFO
         print('Write mutex acquired')
         mutex.acquire()
         num_bytes_written = lycanDev.write_data(periphAddr, data_b)
     except:
-        mutex.release() # Make sure mutex is released, even on write error
+        mutex.release()
         raise
+    print('Releasing')
     mutex.release()
     print('Write mutex released')
     return data_b, num_bytes_written
@@ -73,7 +83,8 @@ def config_to_FIFO(periphAddr, isWrite, regAddr, regVal):
         mutex.acquire()
         num_bytes_written = lycanDev.write_config_command(periphAddr, isWrite, regAddr, regVal)
     except:
-        mutex.release() # Make sure mutex is released, even on write error
+        if(mutex.locked):
+            mutex.release() # Make sure mutex is released, even on write error
         raise
     mutex.release()
     print('Write (config) mutex released')
@@ -93,7 +104,7 @@ def CallBackFunction(CallbackType: int, PipeID_GPIO0: int | bool, Length_GPIO1: 
                     if(isConfig):
                         gui.peripheralTabs[pId].storeRegVal(data.encode())
                     else:
-                        gui.peripheralTabs[pId].displayRXData(data.decode(), True)
+                        gui.peripheralTabs[pId].displayRXData(data, True)
             except Exception as e:
                 gui.peripheralTabs[pId].errorLabel.setText(f'Error with reading in callback: {e}')
         mutex.release()
@@ -131,8 +142,8 @@ class ConfigForm(QDialog):
 class PeripheralTab(QWidget):
 
     # Constructor
-    def __init__(self, peripheralIndex=0):
-        super().__init__()
+    def __init__(self, parent, peripheralIndex=0):
+        super().__init__(parent)
 
         self.pIndex = peripheralIndex
         self.logFile = None
@@ -203,7 +214,7 @@ class PeripheralTab(QWidget):
         self.statusLabel.setText('Transmitting...')
         self.statusLabel.setStyleSheet('color: red; font-weight: bold;')
         try:
-            res = write_to_FIFO(self.pIndex, False, self.txDataField.text(), self.txTypeCombo.currentText())
+            res = write_to_FIFO(self.pIndex, self.txDataField.text(), self.txTypeCombo.currentText())
         except Exception as e:
             print(f'Error {e}')
             self.errorLabel.setText(str(e))
@@ -218,7 +229,14 @@ class PeripheralTab(QWidget):
 
     def displayRXData(self, data, isRx):
         print('Displaying text')
-        self.rxDataLabel.insertPlainText(data)
+        if(self.txTypeCombo.currentText() == 'Hex'):
+            self.rxDataLabel.insertPlainText("\n" + str(data.hex()))
+        elif(self.txTypeCombo.currentText() == 'Dec'):
+            self.rxDataLabel.insertPlainText("\n" + str(int.from_bytes(data, 'little')))
+        elif(self.txTypeCombo.currentText() == 'Bin'):
+            self.rxDataLabel.insertPlainText("\n" + str(bin(int.from_bytes(data, 'little'))))
+        else:
+            self.rxDataLabel.insertPlainText(data.decode())
         self.logData(data, True)
 
     def storeRegVal(self, data):
@@ -276,7 +294,7 @@ class LycanWindow(QTabWidget):
         # Tab Setup #
         self.peripheralTabs = [0]*numPeripherals
         for i in range(0, numPeripherals):
-            self.peripheralTabs[i] = PeripheralTab(i)
+            self.peripheralTabs[i] = PeripheralTab(self, i)
             self.peripheralTabs[i].initComponents()
             self.addTab(self.peripheralTabs[i], f'Peripheral {i}')
             print(f'Added Periph Tab #{i}')
@@ -286,15 +304,40 @@ class LycanWindow(QTabWidget):
 
     def closeEvent(self, event):
         mutex.acquire()
-        PyD3XX.FT_ClearNotificationCallback(lycanDev.ftdiDev)
-        lycanDev.close()
-        mutex.release()
+        try:
+            PyD3XX.FT_ClearNotificationCallback(lycanDev.ftdiDev)
+            lycanDev.close()
+        except Exception as e:
+            print(e)
+        finally:
+            mutex.release()
+            event.accept()
 
 # Main #
 if __name__ == '__main__':
 
     # Instantiate Lycan device
     lycanDev = lycan.Lycan()
+
+    # Check that the device is set up properly
+    status, config = PyD3XX.FT_GetChipConfiguration(lycanDev.ftdiDev)
+    if status != PyD3XX.FT_OK:
+        raise Exception('FAILED TO READ CHIP CONFIG OF DEVICE 0: ABORTING')
+    CH1_NotificationsEnabled = (config.OptionalFeatureSupport & PyD3XX.CONFIGURATION_OPTIONAL_FEATURE_ENABLENOTIFICATIONMESSAGE_INCH1) != 0
+    if not CH1_NotificationsEnabled:
+        print('Config did not include noticification support, reconfiguring and cycling port')
+        config.OptionalFeatureSupport = config.OptionalFeatureSupport & PyD3XX.CONFIGURATION_OPTIONAL_FEATURE_ENABLENOTIFICATIONMESSAGE_INCH1
+        PyD3XX.FT_SetChipConfiguration(lycanDev.ftdiDev, config)
+        PyD3XX.FT_CycleDevicePort(lycanDev.ftdiDev)
+        time.sleep(3)
+        lycanDev.recreate_device()
+        status, config = PyD3XX.FT_GetChipConfiguration(lycanDev.ftdiDev)
+        if status != PyD3XX.FT_OK:
+            raise Exception('FAILED TO READ CHIP CONFIG OF DEVICE 0: ABORTING')
+        CH1_NotificationsEnabled = (config.OptionalFeatureSupport & PyD3XX.CONFIGURATION_OPTIONAL_FEATURE_ENABLENOTIFICATIONMESSAGE_INCH1) != 0
+        if not CH1_NotificationsEnabled:
+            raise Exception('CH1 NOTIFICATIONS COULD NOT BE ENABLED: ABORTING')
+        
     status = PyD3XX.FT_SetNotificationCallback(lycanDev.ftdiDev, CallBackFunction)
     if status != PyD3XX.FT_OK:
         raise Exception('FAILED TO SET CALLBACK FUNCTION OF DEVICE 0: ABORTING')
