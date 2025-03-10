@@ -6,7 +6,7 @@ from PyQt6.QtWidgets import (
     QPushButton, QHBoxLayout, QCheckBox, QComboBox, QTextEdit,
     QTabWidget, QDialog, QDialogButtonBox, QVBoxLayout
 )
-from PyQt6.QtGui import QIntValidator, QColor, QCursor
+from PyQt6.QtGui import QIntValidator, QColor
 import lycan
 import PyD3XX
 from random import randint
@@ -206,7 +206,6 @@ class PeripheralTab(QWidget):
 
     # On request to send to FIFO
     def onSubmitTX(self):
-        self.setCursor(Qt.CursorShape.WaitCursor)
         self.statusLabel.setText('Transmitting...')
         self.statusLabel.setStyleSheet('color: red; font-weight: bold;')
         try:
@@ -219,7 +218,6 @@ class PeripheralTab(QWidget):
             self.errorLabel.setText('') # Reset the error text box
             self.logData(res[0], False)
         finally:
-            self.setCursor(Qt.CursorShape.ArrowCursor)
             self.statusLabel.setText('Receiving...')
             self.statusLabel.setStyleSheet('color: green; font-weight: bold;') # Reset status indicator back to receiving
 
