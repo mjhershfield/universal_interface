@@ -64,6 +64,21 @@ class Lycan():
             return is_config, periphAddr, data
         else:
             return False, -1, None
+        
+    def interpret_raw_bytes(self, raw):
+        is_config = []
+        periphAddr = []
+        data = []
+        while(len(raw) >= 4):
+            # For each packet
+            packet = raw[0:4]
+            # Check if the read packet is a configuration packet response (coming from Lycan)
+            is_config += [raw[3] & 0b00010000]
+            periphAddr += [(raw[3] & 0b11100000) >> 5]
+            data += [raw[0:3]]
+            # Move on to next packet
+            raw = raw[4:]
+        return is_config, periphAddr, data
 
     def construct_data_packet(self, peripheral_addr, data):
         # Check that data is 3 bytes or less
@@ -97,12 +112,13 @@ class Lycan():
 
     def write_data(self, peripheral_addr, data):
         # For every 3 bytes of data, send a packet
+        numBytesWritten = 0
         while(len(data) > 0):
             packet = self.construct_data_packet(peripheral_addr, data[0:3])
             print('Packet to be transmitted: ', packet)
-            self.write_raw_bytes(raw=packet)
+            numBytesWritten += self.write_raw_bytes(raw=packet)
             data = data[3:]
-        return
+        return numBytesWritten
 
     def write_config_command(self, peripheral_addr=0, write=True, reg_addr=0, reg_val=0):
         # Check that the peripheral address is within the correct range
