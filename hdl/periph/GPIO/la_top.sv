@@ -47,7 +47,7 @@ module la_top #(
             packet_out <= '0;
 
         end else begin
-            max_count <= 24'd1; //approx 1 read every 32sec
+            max_count <= 24'd25000000; //approx 1 read every 32sec
             packet_out <= {1'b0, 2'b10, 2'b00, 8'h00, reads};
             // packet_out[28] <= 1'b0;
             // packet_out[27:26] <= 2'b10;

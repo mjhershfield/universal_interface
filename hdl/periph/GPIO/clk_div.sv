@@ -2,7 +2,7 @@ module clk_div #(
     parameter width = 24
 )
 
-//slow_clk = fast_clk/(2*max_count -1)
+//slow_clk = fast_clk/((2*max_count ) -1)
 
 (
     input logic clk,

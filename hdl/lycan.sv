@@ -224,7 +224,7 @@ module lycan (
             .clk(clk),
             .rst(rst),
             .in(),
-            .dut_pins(dut_pins_in), //only for GPIO periph
+            .dut_pins(~dut_pins_in), //only for GPIO periph. for some reason dut pins in seems to be inverted
             .out(),
             .tristate(),
             .tx_data(lycan_in),
