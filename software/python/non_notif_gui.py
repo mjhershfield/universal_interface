@@ -1,6 +1,6 @@
 import sys
 import PyQt6.QtCore as QtCore
-from PyQt6.QtCore import Qt, pyqtSignal, pyqtBoundSignal, QObject
+from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
     QApplication, QLabel, QWidget, QLineEdit, QFormLayout, 
     QPushButton, QHBoxLayout, QCheckBox, QComboBox, QTextEdit,
@@ -22,7 +22,6 @@ WINDOW_HEIGHT = 540
 lycanDev = None
 mutex = None
 gui = None
-signals = None
 
 # Helper Functions #
 
@@ -56,6 +55,58 @@ def parse_input(inStr, format):
         res = res.to_bytes(numBytes, 'little')
     return res # Return the result
     
+def write_to_FIFO(periphAddr, data, format='Hex'):
+    try:
+        # Parse user input
+        data_b = parse_input(data, format)
+    except:
+        raise
+    try:
+        # Write to FIFO
+        print('Write mutex acquired')
+        mutex.acquire()
+        num_bytes_written = lycanDev.write_data(periphAddr, data_b)
+    except:
+        mutex.release()
+        raise
+    print('Releasing')
+    mutex.release()
+    print('Write mutex released')
+    return data_b, num_bytes_written
+
+def config_to_FIFO(periphAddr, isWrite, regAddr, regVal):
+    try:
+        # Parse user input (as Hex)
+        data_b = parse_input(regAddr, 'Hex')
+        # Write to FIFO
+        print('Write (config) mutex acquired')
+        mutex.acquire()
+        num_bytes_written = lycanDev.write_config_command(periphAddr, isWrite, regAddr, regVal)
+    except:
+        if(mutex.locked):
+            mutex.release() # Make sure mutex is released, even on write error
+        raise
+    mutex.release()
+    print('Write (config) mutex released')
+    return data_b, num_bytes_written
+    
+def reading_thread():
+    while(True):
+        mutex.acquire()
+        # Try to read a packet
+        try:
+            isConfig, pId, data = lycanDev.read_packet()
+            if(len(data) > 0):
+                if(isConfig):
+                    # gui.peripheralTabs[pId].storeRegVal(data.encode())
+                    print('Config packet read - ignoring')
+                else:
+                    gui.peripheralTabs[pId].displayRXData(data, True)
+        except Exception as e:
+            gui.peripheralTabs[pId].errorLabel.setText(f'Error with reading in read_thread: {e}')
+        mutex.release()
+        time.sleep(0.1) # Wait 100 ms to allow writing thread to acquire mutex (if needed) (CHANGE LATER?)
+
 
 # Peripheral Config Register Dialog Class #
 class ConfigForm(QDialog):
@@ -90,8 +141,6 @@ class PeripheralTab(QWidget):
     def __init__(self, parent, peripheralIndex=0):
         super().__init__(parent)
 
-        self.gui = parent
-
         self.pIndex = peripheralIndex
         self.logFile = None
         self.logging = False
@@ -113,6 +162,10 @@ class PeripheralTab(QWidget):
         self.configCheckbox = QCheckBox('Config Pkt?')
         self.configCheckbox.setLayoutDirection(Qt.LayoutDirection.RightToLeft)
         self.configCheckbox.setCheckState(Qt.CheckState.Unchecked)
+
+        self.statusLabel = QLabel('Receiving...')
+        self.statusLabel.setStyleSheet('color: green; font-weight: bold;')
+        self.statusLabel.setFixedWidth(120)
 
         self.txDataField = QLineEdit()
         self.txDataField.returnPressed.connect(self.onSubmitTX)
@@ -138,6 +191,7 @@ class PeripheralTab(QWidget):
 
         txRowLayout = QHBoxLayout()
         txRowLayout.addWidget(self.txDataField)
+        txRowLayout.addWidget(self.statusLabel)
         txRowLayout.addWidget(self.txTypeCombo)
         txRowLayout.addWidget(self.txSubmitButton)
 
@@ -152,9 +206,35 @@ class PeripheralTab(QWidget):
 
     # On request to send to FIFO
     def onSubmitTX(self):
-        # Create a writing thread and start it
-        write_t = threading.Thread(target=self.gui.write_to_FIFO, args=(self.pIndex, self.txDataField.text(), self.txTypeCombo.currentText(),))
-        write_t.start()
+        self.statusLabel.setText('Transmitting...')
+        self.statusLabel.setStyleSheet('color: red; font-weight: bold;')
+        try:
+            res = write_to_FIFO(self.pIndex, self.txDataField.text(), self.txTypeCombo.currentText())
+        except Exception as e:
+            print(f'Error {e}')
+            self.errorLabel.setText(str(e))
+        else:
+            print('Successfully wrote')
+            self.errorLabel.setText('') # Reset the error text box
+            self.logData(res[0], False)
+        finally:
+            self.statusLabel.setText('Receiving...')
+            self.statusLabel.setStyleSheet('color: green; font-weight: bold;') # Reset status indicator back to receiving
+
+    def displayRXData(self, data, isRx):
+        print('Displaying text')
+        if(self.txTypeCombo.currentText() == 'Hex'):
+            self.rxDataLabel.insertPlainText("\n" + str(data.hex()))
+        elif(self.txTypeCombo.currentText() == 'Dec'):
+            self.rxDataLabel.insertPlainText("\n" + str(int.from_bytes(data, 'little')))
+        elif(self.txTypeCombo.currentText() == 'Bin'):
+            self.rxDataLabel.insertPlainText("\n" + str(bin(int.from_bytes(data, 'little'))))
+        else:
+            self.rxDataLabel.insertPlainText(data.decode())
+        self.logData(data, True)
+
+    def storeRegVal(self, data):
+        print(data) # TODO
 
     def createLogFile(self):
         if(not self.logging):
@@ -183,10 +263,7 @@ class PeripheralTab(QWidget):
         if(self.logging):
             try:
                 if(isRX):
-                    try:
-                        self.logFile.write(f'{timestamp}:\t{bytes(data)}\n')
-                    except:
-                        print('Error logging to file!')
+                    self.logFile.write(f'{timestamp}:\t{str(data)}\n')
             except Exception as e:
                 print(e)
                 self.errorLabel.setText('Error writing to log file!')
@@ -205,15 +282,11 @@ class LycanWindow(QTabWidget):
     def __init__(self, numPeripherals):
         super().__init__()
 
-        self.rx_update_signal.connect(self.displayRXData)
-        self.config_update_signal.connect(self.storeRegVal)
-        self.error_update_signal.connect(self.displayError)
-
         self.setWindowTitle("Lycan Universal Interface")
         self.setGeometry(200, 200, WINDOW_WIDTH, WINDOW_HEIGHT)
 
         # Tab Setup #
-        self.peripheralTabs = [PeripheralTab]*numPeripherals
+        self.peripheralTabs = [0]*numPeripherals
         for i in range(0, numPeripherals):
             self.peripheralTabs[i] = PeripheralTab(self, i)
             self.peripheralTabs[i].initComponents()
@@ -223,134 +296,31 @@ class LycanWindow(QTabWidget):
         # Show the GUI
         self.show()
 
-    rx_update_signal = pyqtSignal(int, bytearray)
-    config_update_signal = pyqtSignal(int, int, int) # Unspecified parameter types (maybe change later?)
-    error_update_signal = pyqtSignal(int, str)
-
-    def write_to_FIFO(self, periphAddr, data, format='Hex'):
-        try:
-            # Parse user input
-            data_b = parse_input(data, format)
-        except Exception as e:
-            print(f'Error {e}')
-            self.error_update_signal.emit(periphAddr, f'Error with processing user input: {e}')
-            return b'', 0
-        # Write to FIFO
-        numBytesWritten = 0
-        mutex.acquire()
-        print('Write mutex acquired')
-        try:
-            numBytesWritten = lycanDev.write_data(periphAddr, data_b)
-        except Exception as e:
-            print(f'Error {e}')
-            self.error_update_signal.emit(periphAddr, f'Error writing to Lycan: {e}')
-        else:
-            print('Successfully wrote')
-            self.error_update_signal.emit(periphAddr, f'') # Reset the error text box
-            self.peripheralTabs[periphAddr].logData(data_b.decode(), False)
-        finally:
-            mutex.release()
-            print('Write mutex released')
-        return data_b, numBytesWritten
-
-    def config_to_FIFO(self, periphAddr, isWrite, regAddr, regVal):
-        try:
-            # Parse user input (as Hex)
-            data_b = parse_input(regAddr, 'Hex')
-            # Write to FIFO
-            print('Write (config) mutex acquired')
-            mutex.acquire()
-            num_bytes_written = lycanDev.write_config_command(periphAddr, isWrite, regAddr, regVal)
-        except:
-            if(mutex.locked):
-                mutex.release() # Make sure mutex is released, even on write error
-            raise
-        mutex.release()
-        print('Write (config) mutex released')
-        return data_b, num_bytes_written
-
-    def process_packet_thread(self, raw):
-        try:
-            isConfig_arr, pId_arr, data_arr = lycanDev.interpret_raw_bytes(raw)
-            # Now, do something based on each packet
-            for i in range(len(isConfig_arr)):
-                if(len(data_arr[i]) > 0):
-                    if(isConfig_arr[i]):
-                        self.config_update_signal.emit(pId_arr[i], bytes(data_arr[i]))
-                    else:
-                        self.rx_update_signal.emit(pId_arr[i], data_arr[i])
-        except Exception as e:
-            self.error_update_signal.emit(pId_arr[i], f'Error with processing read packet(s): {e}')
-    
-    def CallBackFunction(self, CallbackType: int, PipeID_GPIO0: int | bool, Length_GPIO1: int | bool):
-        print('Callback called')
-        if(CallbackType == PyD3XX.E_FT_NOTIFICATION_CALLBACK_TYPE_DATA):
-            print("CBF: You have " + str(Length_GPIO1) + " bytes to read at pipe " + hex(PipeID_GPIO0) + "!")
-            mutex.acquire()
-            print('Acquired lock to read')
-            # For each packet received
-            try:
-                numBytes, raw = lycanDev.read_raw_bytes(Length_GPIO1)
-            except Exception as e:
-                print(f'Error with reading in callback: {e}')
-            finally:
-                mutex.release()
-                print('Released read lock')
-            # Start a new thread to process the packet(s)
-            process_t = threading.Thread(target=self.process_packet_thread, args=(raw,))
-            process_t.start()
-        return None
-
-    def displayRXData(self, pIndex, data):
-        print('Displaying text')
-        if(self.peripheralTabs[pIndex].txTypeCombo.currentText() == 'Hex'):
-            self.peripheralTabs[pIndex].rxDataLabel.insertPlainText("\n" + str(data.hex()))
-        elif(self.peripheralTabs[pIndex].txTypeCombo.currentText() == 'Dec'):
-            self.peripheralTabs[pIndex].rxDataLabel.insertPlainText("\n" + str(int.from_bytes(data, 'little')))
-        elif(self.peripheralTabs[pIndex].txTypeCombo.currentText() == 'Bin'):
-            self.peripheralTabs[pIndex].rxDataLabel.insertPlainText("\n" + str(bin(int.from_bytes(data, 'little'))))
-        else:
-            try:
-                self.peripheralTabs[pIndex].rxDataLabel.insertPlainText(data.decode())
-            except:
-                self.peripheralTabs[pIndex].rxDataLabel.insertPlainText(str(data))
-        self.peripheralTabs[pIndex].logData(data, True)
-
-    def displayError(self, pIndex, errorStr):
-        self.peripheralTabs[pIndex].errorLabel.setText(errorStr)
-
-    def storeRegVal(self, pIndex, addr, val):
-        print(addr, val) # TODO
-
     def closeEvent(self, event):
+        mutex.acquire()
         try:
             PyD3XX.FT_ClearNotificationCallback(lycanDev.ftdiDev)
             lycanDev.close()
         except Exception as e:
             print(e)
         finally:
+            mutex.release()
             event.accept()
 
 # Main #
 if __name__ == '__main__':
 
-    # Create mutex
-    mutex = threading.Lock()
-
-    app = QApplication(sys.argv)
-    gui = LycanWindow(8)
-
     # Instantiate Lycan device
     lycanDev = lycan.Lycan()
 
-    # Check that the device is set up properly
+    # Check that the device is set up properly (NO NOTIFICATIONS)
     status, config = PyD3XX.FT_GetChipConfiguration(lycanDev.ftdiDev)
     if status != PyD3XX.FT_OK:
         raise Exception('FAILED TO READ CHIP CONFIG OF DEVICE 0: ABORTING')
     CH1_NotificationsEnabled = (config.OptionalFeatureSupport & PyD3XX.CONFIGURATION_OPTIONAL_FEATURE_ENABLENOTIFICATIONMESSAGE_INCH1) != 0
-    if not CH1_NotificationsEnabled:
-        print('Config did not include noticification support, reconfiguring and cycling port')
-        config.OptionalFeatureSupport = config.OptionalFeatureSupport & PyD3XX.CONFIGURATION_OPTIONAL_FEATURE_ENABLENOTIFICATIONMESSAGE_INCH1
+    if CH1_NotificationsEnabled:
+        print('Config has noticification support, reconfiguring and cycling port')
+        config.OptionalFeatureSupport = config.OptionalFeatureSupport & ~PyD3XX.CONFIGURATION_OPTIONAL_FEATURE_ENABLENOTIFICATIONMESSAGE_INCH1
         PyD3XX.FT_SetChipConfiguration(lycanDev.ftdiDev, config)
         PyD3XX.FT_CycleDevicePort(lycanDev.ftdiDev)
         time.sleep(3)
@@ -359,11 +329,19 @@ if __name__ == '__main__':
         if status != PyD3XX.FT_OK:
             raise Exception('FAILED TO READ CHIP CONFIG OF DEVICE 0: ABORTING')
         CH1_NotificationsEnabled = (config.OptionalFeatureSupport & PyD3XX.CONFIGURATION_OPTIONAL_FEATURE_ENABLENOTIFICATIONMESSAGE_INCH1) != 0
-        if not CH1_NotificationsEnabled:
-            raise Exception('CH1 NOTIFICATIONS COULD NOT BE ENABLED: ABORTING')
+        if CH1_NotificationsEnabled:
+            raise Exception('CH1 NOTIFICATIONS COULD NOT BE DISABLED: ABORTING')
         
-    status = PyD3XX.FT_SetNotificationCallback(lycanDev.ftdiDev, gui.CallBackFunction)
-    if status != PyD3XX.FT_OK:
-        raise Exception('FAILED TO SET CALLBACK FUNCTION OF DEVICE 0: ABORTING')
+    # Create mutex
+    mutex = threading.Lock()
+
+    # Create read thread
+    read_t = threading.Thread(target=reading_thread, daemon=True)
+
+    app = QApplication(sys.argv)
+    gui = LycanWindow(8)
+    
+    # Start the read thread
+    read_t.start()
 
     sys.exit(app.exec())
