@@ -18,4 +18,8 @@ Design 2
 
 [Beta Test Plan](https://docs.google.com/document/d/1YEig5C3KD9Lj61bhuICt8k9V8IyhC4E_XDFU-sMW3JI/edit?usp=sharing)
 
+[Release Candidate Build Report](https://docs.google.com/document/d/1gw9MzM0dooHYQaVLRGKPz7g1pOPhDUj1yfL-GMfigEQ/edit?usp=sharing)
+
+[Preliminary Report](https://docs.google.com/document/d/1XtcurjFGzFiKvSNFrlR0Eqjygl3v19PbzhooDa9ASso/edit?usp=sharing)
+
 [Beta Presentation - Google Slides](https://docs.google.com/presentation/d/1Kz-w51GAH6ogjwm8pqp9vZOC9lT-C9V3KBuRBkvCrys/edit?usp=sharing)
