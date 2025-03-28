@@ -201,3 +201,45 @@
 ## 2/27
 - All: Stakeholder meeting (15 min)
 - Gilon: continue work to integrate GPIO periph (2 hr)
+- Matthew S: Finish LLC board assembly and start testing it (2 hr)
+
+## 3/2
+- All: Meet to discuss and test UART receive (2 hr)
+- Matthew S: Continue testing LLC board, work on UART software (1 hr)
+
+## 3/4
+- All: Meet to work on UART RX (2 hr)
+
+## 3/5
+- Matthew S: Work on UART software & testing (2 hr)
+- Gilon: Work on UART RX (2 hr)
+- Adam: Work on UART RX (2 hr)
+- Andres: Work on presentation (2 hr)
+
+## 3/6
+- Matthew S and Andres: Finish presentation (2 hr)
+- Matthew S: Work on UART testing and Arduino code for demo (1 hr)
+- Gilon and Adam: Work on UART RX (2 hr)
+
+## 3/7
+- Gilon, Matthew H, Adam: Work on UART RX (2 hr)
+- Matthew S: Work on Arduino UART testing (2 hr)
+
+## 3/11
+- All: Beta Presentation
+
+## 3/13
+- Matthew S: Work on software infrastructure fixes, GUI working much better (3 hr)
+- Matthew S: Work on porting software to Linux (1 hr)
+
+## 3/25
+- Matthew S, Gilon, Adam: Stakeholder meeting (15 min)
+- Matthew S, Gilon, Adam: Meet to discuss updates and work on GPIO peripheral (2 hr)
+
+## 3/26
+- Matthew S: Work on GPIO peripheral software (graph) (2 hr)
+
+## 3/27
+- Matthew S and Gilon: Work on GPIO peripheral & testing (2 hr)
+- Matthew S: Work on GPIO peripheral software (graph) and more Python OOP (2 hr)
+- All: Work on Preliminary Report & Release Candidate Report (3 hr)
