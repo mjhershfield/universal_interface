@@ -6,8 +6,9 @@ class Lycan():
     # Lycan object constructor
     def __init__(self):
         # Set up FTDI module and device
-        PyD3XX.SetPrintLevel(PyD3XX.PRINT_NONE) # Make PyD3XX not print anything.
+        PyD3XX.SetPrintLevel(PyD3XX.PRINT_ALL) # Make PyD3XX not print anything.
         Status, DeviceCount = PyD3XX.FT_CreateDeviceInfoList() # Create a device info list.
+        self.connectedFtdiCount = DeviceCount
         if Status != PyD3XX.FT_OK:
             raise Exception(PyD3XX.FT_STATUS_STR[Status] + ' | FAILED TO CREATE DEVICE INFO LIST: ABORTING')
         if (DeviceCount == 0):
@@ -33,14 +34,12 @@ class Lycan():
         self.flush_in_pipe()
         print("Device (index, serial, desc): 0, " + Device.SerialNumber + ", " + Device.Description)
 
-    def recreate_device(self):
-        self.__init__()
-
     def flush_in_pipe(self):
         # Flush the in pipe
         try:
             self.read_raw_bytes(1024)
-        except:
+        except Exception as e:
+            print(e)
             pass
 
     def read_raw_bytes(self, length=4):
@@ -139,9 +138,10 @@ class Lycan():
         # Transmit the packet
         numBytesTransferred = self.write_raw_bytes(packet.to_bytes(4, 'little'))
         return numBytesTransferred
-        
+
     def close(self):
+        print('Closing device')
         status = PyD3XX.FT_Close(self.ftdiDev)
         if(status != PyD3XX.FT_OK):
-            raise Exception(f'Error closing device. Status Code {status}')
+            print(f'Error closing device. Status Code {status}')
         return
