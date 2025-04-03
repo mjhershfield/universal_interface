@@ -21,7 +21,8 @@ module mock_fifo #(
     if (rst) begin
       dout_r <= $urandom;
       dout_r[31:29] <= 3'b0;
-      dout_r[27:26] <= 2'b11;
+      dout_r[28] <= 1'b1; //send to config
+      //dout_r[27:26] <= 2'b11;
       remaining_data_amt <= INITIAL_FILLED;
     end else begin
       if (rden) begin
@@ -29,7 +30,8 @@ module mock_fifo #(
           remaining_data_amt <= remaining_data_amt - 1;
           dout_r <= $urandom;
           dout_r[31:29] <= 3'b0;
-          dout_r[27:26] <= 2'b11;
+          dout_r[28] <= 1'b1; //send to config
+          //dout_r[27:26] <= 2'b11;
         end else begin
           dout_r <= 0;
         end
