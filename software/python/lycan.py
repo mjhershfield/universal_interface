@@ -31,13 +31,14 @@ class Lycan():
         PyD3XX.FT_SetPipeTimeout(Device, self.inPipe, 500)
         PyD3XX.FT_SetPipeTimeout(Device, self.outPipe, 500)
         PyD3XX.FT_SetSuspendTimeout(Device, 0)
+        print('Flushing...')
         self.flush_in_pipe()
         print("Device (index, serial, desc): 0, " + Device.SerialNumber + ", " + Device.Description)
 
     def flush_in_pipe(self):
         # Flush the in pipe
         try:
-            self.read_raw_bytes(1024)
+            PyD3XX.FT_AbortPipe(self.ftdiDev, self.inPipe)
         except Exception as e:
             print(e)
             pass
@@ -58,26 +59,39 @@ class Lycan():
             # Check if the read packet is a configuration packet response (coming from Lycan)
             is_config = readVal[3] & 0b00010000
             periphAddr = (readVal[3] & 0b11100000) >> 5
-            data = readVal[0:3]
+            validBytes = (readVal[3] * 0b00001100) >> 2
+            data = readVal[0:validBytes]
             print('Bytes read:', hex(int.from_bytes(readVal, 'little')))
             return is_config, periphAddr, data
         else:
             return False, -1, None
         
     def interpret_raw_bytes(self, raw):
-        is_config = []
-        periphAddr = []
-        data = []
+        is_config_arr = []
+        periphAddr_arr = []
+        data_arr = []
         while(len(raw) >= 4):
             # For each packet
             packet = raw[0:4]
             # Check if the read packet is a configuration packet response (coming from Lycan)
-            is_config += [raw[3] & 0b00010000]
-            periphAddr += [(raw[3] & 0b11100000) >> 5]
-            data += [raw[0:3]]
+            is_config = (raw[3] & 0b00010000) >> 4
+            is_config_arr += [is_config]
+            periphAddr = (raw[3] & 0b11100000) >> 5
+            periphAddr_arr += [periphAddr]
+            if(is_config):
+                config_write = (raw[3] & 0b00001000) >> 3
+                if(not config_write):
+                    print('Received Config Packet...')
+                    addr = (raw[3] & 0b00000111) # Address
+                    val = raw[0:3]
+                    data_arr += [addr.to_bytes(1, 'little') + val]
+                else:
+                    print('Ignoring Config \'Write\' Packet')
+            else:
+                data_arr += [raw[0:3]]
             # Move on to next packet
             raw = raw[4:]
-        return is_config, periphAddr, data
+        return is_config_arr, periphAddr_arr, data_arr
 
     def construct_data_packet(self, peripheral_addr, data):
         # Check that data is 3 bytes or less
@@ -130,12 +144,13 @@ class Lycan():
         if(reg_val < 0 or reg_val > 16777215):
             raise Exception('Error: Invalid register value (max of 24 bits)')
         # Construct the packet
-        packet = peripheral_addr << 32 # address
-        packet += 1 << 29 # config flag bit
-        packet += write << 28 # read/write bit
-        packet += reg_addr << 27
+        packet = peripheral_addr << 32 - 3 # address
+        packet += 1 << 29 - 1 # config flag bit
+        packet += write << 28 - 1 # read/write bit
+        packet += reg_addr << 27 - 2
         packet += reg_val
         # Transmit the packet
+        print('Packet to be transmitted: ', packet.to_bytes(4, 'little'))
         numBytesTransferred = self.write_raw_bytes(packet.to_bytes(4, 'little'))
         return numBytesTransferred
 
