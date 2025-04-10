@@ -144,6 +144,23 @@ module periph #(
         );
       end
 
+      PERIPH_SPI_M: begin : gen_spim
+        spim spim_periph (
+            .clk(clk),
+            .rst(rst),
+            .in(in),
+            .out(out),
+            .tristate(tristate),
+            .tx_data(tx_fifo_dout[usb_packet_width-periph_address_width-1:0]),
+            .tx_empty(tx_fifo_empty),
+            .tx_rden(tx_fifo_rden),
+            .rx_data(rx_fifo_din),
+            .rx_wren(rx_fifo_wren),
+            .rx_full(rx_fifo_full),
+            .idle(idle)
+        );
+      end
+
       PERIPH_GPIO: begin : gen_gpio
         GPIO gpio_periph (
           .clk(clk),

@@ -65,7 +65,7 @@ module lycan (
    logic [num_dut_pins-1:0] dut_pins_tri;
   localparam periph_type_t periph_list[8] = {
     PERIPH_GPIO, //peripho 0 should be reserved fro GPIO
-    PERIPH_LOOPBACK,
+    PERIPH_SPI_M,
     PERIPH_LOOPBACK,
     PERIPH_LOOPBACK,
     PERIPH_LOOPBACK,
@@ -85,9 +85,9 @@ module lycan (
 
   // Hard code dut pin outputs to 0 = UART TX, 1 = UART RX
   // 0 = output, 1 = input
-  assign dut_pins_out = {15'b0, periph_outs[0]};
-  assign periph_ins[0] = dut_pins_in[1];
-  assign dut_pins_tri = 16'hFFFF; //ALL TRI
+  assign dut_pins_out = {{13{1'b0}}, periph_outs[6:4]};
+  assign periph_ins[3] = dut_pins_in[3];
+  assign dut_pins_tri = {{13{1'b1}}, 3'b0}; //ALL TRI
   // assign dut_pins_out = 16'b0;
   // assign dut_pins_tri = 16'hFFFF;
 

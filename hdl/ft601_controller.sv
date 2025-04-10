@@ -3,14 +3,14 @@ module ft601_controller (
     input logic rst,
 
     // Control signals coming from the FT601
-    (* mark_debug = "true" *) input logic usb_tx_full,
-    (* mark_debug = "true" *)input logic usb_rx_empty,
+     input logic usb_tx_full,
+    input logic usb_rx_empty,
 
     // Control signals going to FT601
-    (* mark_debug = "true" *)output logic usb_wren_l,
-    (* mark_debug = "true" *)output logic usb_rden_l,
-    (* mark_debug = "true" *)output logic usb_outen_l,
-    (* mark_debug = "true" *)output logic usb_rst_l,
+    output logic usb_wren_l,
+    output logic usb_rden_l,
+    output logic usb_outen_l,
+    output logic usb_rst_l,
 
     //data going to peripheral
     output logic [31:0] data_o,
@@ -20,18 +20,18 @@ module ft601_controller (
     // TODO: change data_i/o, i/o_valid to use usb_data_* outside of this module.
     // input logic [31:0] usb_data_in,
     // output logic [31:0] usb_data_out,
-    (* mark_debug = "true" *)output logic usb_data_tri,
+    output logic usb_data_tri,
 
-    (* mark_debug = "true" *)input logic [3:0] be_in,
-    (* mark_debug = "true" *)output logic [3:0] be_out,
+    input logic [3:0] be_in,
+    output logic [3:0] be_out,
     output logic be_tri,
 
-    (* mark_debug = "true" *)input logic lycan_in_full,
-    (* mark_debug = "true" *)input logic lycan_out_empty,
+    input logic lycan_in_full,
+    input logic lycan_out_empty,
     // Whether peripheral FIFOs have been initialized
-    (* mark_debug = "true" *)input  logic periph_ready,
+    input  logic periph_ready,
 
-    (* mark_debug = "true" *)output logic [1:0] state_r_out
+    output logic [1:0] state_r_out
 );
 
   typedef enum logic [1:0] {
@@ -76,7 +76,7 @@ module ft601_controller (
 
       read: begin
         usb_outen_l = lycan_in_full; //avoids reading when ftdi to lycan fifo is full
-        usb_rden_l = lycan_in_full; //should go high one cycle after rx_empty goes high
+        usb_rden_l = !(!lycan_in_full & !usb_rx_empty); //should go high one cycle after rx_empty goes high
         rd_data_valid = &be_in;
 
         // data_o = usb_data_in;

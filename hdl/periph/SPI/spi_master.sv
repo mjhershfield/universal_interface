@@ -5,17 +5,15 @@ module spi_master #(
 )(
     input logic clk,
     input logic rst,
-    input logic [7:0] tx_data,
-    input logic tx_empty,
+    (* mark_debug = "true" *)input logic [7:0] tx_data,
+    (* mark_debug = "true" *)input logic tx_empty,
+    (* mark_debug = "true" *)output logic tx_rden,
 
     //SPI signals
-    output logic CS_L,
-    output logic SCLK,
-    output logic MOSI,
-    input logic MISO,
-
-    //config signals
-    input logic [WIDTH-1:0] sclk_div_count,
+    (* mark_debug = "true" *)output logic CS_L,
+    (* mark_debug = "true" *)output logic SCLK,
+    (* mark_debug = "true" *)output logic MOSI,
+    (* mark_debug = "true" *)input logic MISO,
 
     //data control for data received and converted from slave
     output logic [7:0] rx_data,
@@ -30,28 +28,18 @@ typedef enum logic [1:0] {
     S_STOP
 } spi_m_state_t;
 
-spi_m_state_t state_r, nxt_state;
+(* mark_debug = "true" *) spi_m_state_t state_r, nxt_state;
 
 //data shift
 logic [7:0] shift_tx_r, nxt_shift_tx;
 logic [7:0] shift_rx_r, nxt_shift_rx;
 logic [3:0] bit_cnt_r, nxt_bit_cnt;
 
-logic clk_pulse;    //clock divider for SCLK
 
 
-clk_div #(
-    .width(WIDTH)
-)clk_div_spi(
-    .clk(clk),
-    .rst(rst),
-    .div_clk(clk_pulse),
-    .max_count(sclk_div_count)
-);
+assign SCLK = clk;
 
-assign SCLK = clk_pulse;
-
-always_ff @(posedge clk_pulse or posedge rst) begin
+always_ff @(posedge clk or posedge rst) begin
     if (rst) begin
         state_r <= S_IDLE;
         shift_tx_r <= 8'b0;
@@ -76,6 +64,7 @@ always_comb begin
     MOSI = 1'b0;
     rx_data = 8'b0;
     rx_valid = 1'b0;
+    tx_rden = 1'b0;
 
     unique case (state_r)
         S_IDLE: begin
@@ -84,12 +73,13 @@ always_comb begin
             if (tx_empty == 0) begin
                 nxt_shift_tx = tx_data;
                 nxt_bit_cnt = 4'b0;
+                tx_rden = 1'b1;
                 nxt_state = S_START;
             end
         end
 
         S_START: begin
-            CS_L = 1'b0;
+            //CS_L = 1'b0;
             nxt_state = S_TRANSFER;
         end
 
@@ -104,12 +94,12 @@ always_comb begin
                 nxt_bit_cnt = bit_cnt_r + 1;
             end else begin
                 nxt_state = S_STOP;
-                CS_L = 1'b0; //keep enabled here to save an extra state (same as S_END)
+                CS_L = 1'b1; //keep enabled here to save an extra state (same as S_END)
             end
         end
 
         S_STOP: begin
-            CS_L = 1'b1;
+            //CS_L = 1'b1;
             rx_data = shift_rx_r;
             rx_valid = 1'b1;
             nxt_state = S_IDLE;
