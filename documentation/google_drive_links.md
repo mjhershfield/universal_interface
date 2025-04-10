@@ -23,3 +23,7 @@ Design 2
 [Release Candidate Build Report](https://docs.google.com/document/d/1gw9MzM0dooHYQaVLRGKPz7g1pOPhDUj1yfL-GMfigEQ/edit?usp=sharing)
 
 [Preliminary Report](https://docs.google.com/document/d/1XtcurjFGzFiKvSNFrlR0Eqjygl3v19PbzhooDa9ASso/edit?usp=sharing)
+
+[Final Report](https://docs.google.com/document/d/1E5ILzvDU4eBaTxmb9GkHOYxsOXNxfB71tYntxCAE62w/edit?usp=sharing)
+
+[Production Release](https://docs.google.com/document/d/1le2-SLldyKhwBHLhtjmHqEtybo4ij-QXvRt2Q57nu6I/edit?usp=sharing)
