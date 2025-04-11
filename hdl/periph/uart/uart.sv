@@ -12,13 +12,13 @@ module uart (
     output logic [tristates_per_peripheral-1:0] tristate,
 
     // peripheral address is not stored in the local FIFOs.
-    input logic [usb_packet_width-periph_address_width-1:0] tx_data,
-    input logic tx_empty,
-    output logic tx_rden,
+    (* mark_debug = "true" *) input logic [usb_packet_width-periph_address_width-1:0] tx_data,
+    (* mark_debug = "true" *) input logic tx_empty,
+    (* mark_debug = "true" *) output logic tx_rden,
 
-    output logic [usb_packet_width-periph_address_width-1:0] rx_data,
-    output logic rx_wren,
-    input logic rx_full,
+    (* mark_debug = "true" *) output logic [usb_packet_width-periph_address_width-1:0] rx_data,
+    (* mark_debug = "true" *) output logic rx_wren,
+    (* mark_debug = "true" *) input logic rx_full,
 
     output logic idle
 );
@@ -28,13 +28,13 @@ module uart (
   localparam logic [31:0] READ_TIMEOUT = 32'(CLK_RATIO * 10 * 100);
 
   logic uart_tx_clk, uart_tx_busy, uart_tx_rden;
-  logic [7:0] uart_tx_data;
-  logic tx_split_wren, tx_split_rden, tx_split_valid;
+  (* mark_debug = "true" *) logic [7:0] uart_tx_data;
+  (* mark_debug = "true" *) logic tx_split_wren, tx_split_rden, tx_split_valid;
   logic uart_rx_clk, uart_rx_busy, uart_rx_full, uart_rx_error, uart_rx_done;
   logic [7:0] uart_rx_data;
-  logic rx_comb_wren, rx_comb_rden;
-  logic [23:0] rx_comb_dout;
-  logic [ 1:0] rx_comb_valid_bytes;
+  (* mark_debug = "true" *) logic rx_comb_wren, rx_comb_rden;
+  (* mark_debug = "true" *) logic [23:0] rx_comb_dout;
+  (* mark_debug = "true" *) logic [ 1:0] rx_comb_valid_bytes;
 
   logic [31:0] rx_cycle_counter_r;
   logic force_read;
@@ -42,13 +42,13 @@ module uart (
   logic [31:0] tx_splitter_data;
   logic [31:0] uart_config_data;
 
-  logic [23:0] uart_cfg_read_data;
-  logic uart_cfg_valid;
+  (* mark_debug = "true" *) logic [23:0] uart_cfg_read_data;
+  (* mark_debug = "true" *) logic uart_cfg_valid;
   logic [23:0] all_uart_cfg_regs [8];
 
-  logic [31:0] uart_data_to_split, config_data;
+  (* mark_debug = "true" *) logic [31:0] uart_data_to_split, config_data;
 
-  logic cfg_read_en, cfg_write_en;
+  (* mark_debug = "true" *) logic cfg_read_en, cfg_write_en;
 
   uart_tx tx (
       .clk(uart_tx_clk),
@@ -85,6 +85,8 @@ module uart (
 
   generic_config_regs #(
     .reset_vals({PERIPH_UART, 4'd8, STOP_BITS_1, PARITY_NONE, 3'd4, 1'b0, 1'b0, 1'b0})
+    //.reset_vals({4'd1, 4'd2, 4'd3, 4'd4, 4'd5, 4'd6, 4'd7, 4'd8})
+
   )
   uart_config_regs (
       .clk(clk),
@@ -179,7 +181,9 @@ module uart (
   assign uart_comb_wren = uart_rx_done;
 
   always_comb begin
-      if (tx_split_valid && ~uart_cfg_valid) rx_data = {1'b0, rx_comb_valid_bytes, 2'b00, rx_comb_dout};
+      //if (tx_split_valid && ~uart_cfg_valid) rx_data = {1'b0, rx_comb_valid_bytes, 2'b00, rx_comb_dout}; //ISSUE
+    //need to make sure that reading a config packet wouldnt also somehow set rx_comb_valid_bytes to nonzero
+      if (rx_comb_valid_bytes != 2'b00 && ~uart_cfg_valid) rx_data = {1'b0, rx_comb_valid_bytes, 2'b00, rx_comb_dout}; //ISSUE
       else rx_data = {5'b11100, uart_cfg_read_data};
   end
 
