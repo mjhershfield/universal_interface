@@ -1,9 +1,9 @@
 package config_reg_pkg;
   typedef enum logic [2:0] {
-    WHO_A_I,
+    WHO_AM_I,
     NUM_DATA_BITS,
     STOP_BITS,
     PARITY,
-    RX_TX_RATIO
+    CLK_DIV_MAX
   } uart_config_t;
 endpackage

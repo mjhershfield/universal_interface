@@ -67,7 +67,7 @@ module uart (
       .clk(clk),
       .rst(rst),
       .div_clk(uart_tx_clk),
-      .max_count(24'(CLK_RATIO))
+      .max_count(all_uart_cfg_regs[CLK_DIV_MAX][23:0])
   );
 
   cfg_packet_check cfg_check (
@@ -84,7 +84,7 @@ module uart (
   end
 
   generic_config_regs #(
-    .reset_vals({PERIPH_UART, 4'd8, STOP_BITS_1, PARITY_NONE, 3'd4, 1'b0, 1'b0, 1'b0})
+    .reset_vals({PERIPH_UART, 4'd8, STOP_BITS_1, PARITY_NONE, CLK_RATIO, 1'b0, 1'b0, 1'b0})
     //.reset_vals({4'd1, 4'd2, 4'd3, 4'd4, 4'd5, 4'd6, 4'd7, 4'd8})
 
   )
@@ -125,7 +125,7 @@ module uart (
       .clk(clk),
       .rst(rst),
       .div_clk(uart_rx_clk),
-      .max_count(24'(CLK_RATIO / 8))
+      .max_count({3'b0, all_uart_cfg_regs[CLK_DIV_MAX][23:3]})
   );
   
   uart_rx rx (
