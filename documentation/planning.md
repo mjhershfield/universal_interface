@@ -153,10 +153,10 @@ This protocol was designed to allow interleaving packets from different peripher
 |Name|Bit field|Notes|
 |-|-|-|
 |Peripheral Address|31-29|Ranges from 0-7|
-|Configuration Flag|28|1 = data from config register|
-|Number of valid bytes|27-26|1-3 bytes in data field of this packet|
-|Reserved|25-24|Currently unused|
-|Data for peripheral|23-0|Up to 3 bytes of data|
+|Configuration Flag|28|1 = data for config|
+|Read/Write|27|0=read, 1=write|
+|Configuration register address|26-24|Peripheral dependent?|
+|New value of register|23-0|ignored for reads. bottom bits of this field are used|
 
 Alternatively, multiple channels could be used instead of the configuration flag (eg. send config on channel 0, data on channel 1), freeing a bit from every packet. I don't know what time cost is associated with switching channels on the FPGA side.
 

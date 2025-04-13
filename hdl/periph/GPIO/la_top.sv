@@ -3,26 +3,22 @@ module la_top #(
 )(
     input logic clk, rst,
     input logic [width-1:0] packet_in,
-    output logic [width-1:0] packet_out,
+    (* mark_debug = "true" *) output logic [width-periph_address_width-1:0] packet_out,
     input logic [15:0] pin_vals,
-    output logic data_valid
+    (* mark_debug = "true" *)output logic data_valid,
+    input logic [23:0] max_count,
+    input logic en
 );
 
-    logic go;
-    logic [23:0] max_count;
     logic [15:0] reads;
     logic div_clk;
     logic div_clk_rising;
 
-    assign go = packet_in[28];
-
-
-
-    clk_div #( .width(24) ) clk_div ( 
+    clk_div #( .width(27) ) clk_div ( 
         .clk(clk), 
         .rst(rst), 
         .div_clk(div_clk),
-        .max_count(max_count)
+        .max_count({max_count, 3'b0})
     );
 
     logic_analyzer #(.width(16)) logic_analyzer(
@@ -43,19 +39,17 @@ module la_top #(
     always_ff @(posedge clk, posedge rst) begin
         if (rst) begin
             data_valid <= 1'b0;
-            max_count <= '0;
             packet_out <= '0;
 
         end else begin
-            max_count <= 24'd7; //hardcoded to 16x  div
-            packet_out[31:29] <= 3'b000;
-            packet_out[28] <= 1'b0;
-            packet_out[27:26] <= 2'b10;
-            packet_out[25:24] <= 2'b00;
-            packet_out[23:16] <= '0;
-            packet_out[15:0] <= reads;
+            packet_out <= {1'b0, 2'b10, 2'b00, 8'h00, reads};
+            // packet_out[28] <= 1'b0;
+            // packet_out[27:26] <= 2'b10;
+            // packet_out[25:24] <= 2'b00;
+            // packet_out[23:16] <= '0;
+            // packet_out[15:0] <= reads;
             
-            data_valid <= 1'b1 & div_clk_rising;
+            data_valid <= div_clk_rising & en;
 
 
         end
@@ -69,3 +63,5 @@ Configuration Flag	28	0 = data for tx/rx
 Number of valid bytes	27-26	1-3 bytes in data field of this packet
 Reserved	25-24	Currently unused
 Data for peripheral	23-0	Up to 3 bytes of data*/
+
+// 0000 1000 0000 0000 1111 1111 1111 1111
