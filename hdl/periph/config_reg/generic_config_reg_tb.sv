@@ -38,13 +38,13 @@ module generic_config_regs_tb;
 
         //write values to all registers
         for (int i = 0; i < 8; i++) begin
-            packet <= {5'b00001, i[2:0], 16'hDDD0, i[7:0]}; //write to all packets with unique data
+            packet <= {5'b00011, i[2:0], 16'hDDD0, i[7:0]}; //write to all packets with unique data
             @(posedge clk);
         end
 
         //read back and check data
         for (int i = 0; i < 8; i++) begin
-            packet <= {5'b00000, i[2:0], 24'h000000}; //read
+            packet <= {5'b00010, i[2:0], 24'h000000}; //read
             @(posedge clk);
             if (read_data != (24'hDDD000 + i)) begin
                 $display("ERROR: Register %0d read mismatch. Expected %h, Got %h", i, 24'hDDD000 + i, read_data);

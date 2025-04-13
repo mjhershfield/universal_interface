@@ -29,7 +29,7 @@ module lycan (
   // Local signals
   logic rst;
   logic read_periph_data;
-  logic [num_peripherals-1:0]
+  (* mark_debug = "true" *) logic [num_peripherals-1:0]
       periph_tx_fulls,
       periph_rx_rdens,
       periph_rx_emptys,
@@ -43,9 +43,9 @@ module lycan (
   logic [tristates_per_peripheral*num_peripherals-1:0] periph_tristates;
   // (* mark_debug = "true" *) logic [usb_packet_width-1:0] periph_tx_din;
   logic [2:0] periph_grant;
-  logic [num_peripherals-1:0] decoded_grant;
+  (* mark_debug = "true" *) logic [num_peripherals-1:0] decoded_grant;
   logic [usb_packet_width-1:0] arbiter_out;
-  logic arbiter_out_valid;
+  (* mark_debug = "true" *) logic arbiter_out_valid;
 
   logic [num_peripherals-1:0][usb_packet_width-1:0] mux_options;
 
@@ -63,14 +63,13 @@ module lycan (
   logic [num_dut_pins-1:0] dut_pins_tri;
   localparam periph_type_t periph_list[8] = {
     PERIPH_UART,
-    // PERIPH_LOOPBACK,
-    PERIPH_LOOPBACK,
-    PERIPH_LOOPBACK,
-    PERIPH_LOOPBACK,
-    PERIPH_LOOPBACK,
-    PERIPH_LOOPBACK,
-    PERIPH_LOOPBACK,
-    PERIPH_LOOPBACK
+    PERIPH_UART,
+    PERIPH_UART,
+    PERIPH_UART,
+    PERIPH_UART,
+    PERIPH_UART,
+    PERIPH_UART,
+    PERIPH_UART
   };
 
   // Set voltage regulator for 2.5V
@@ -84,9 +83,16 @@ module lycan (
 
   // Hard code dut pin outputs to 0 = UART TX, 1 = UART RX
   // 0 = output, 1 = input
-  assign dut_pins_out = {15'b0, periph_outs[0]};
-  assign periph_ins[0] = dut_pins_in[1];
-  assign dut_pins_tri = 16'hFFFE;
+  always_comb begin
+    for (int i = 0; i < 8; i ++) begin
+        dut_pins_out[2*i] = periph_outs[i*outputs_per_peripheral];
+        periph_ins[i*inputs_per_peripheral] = dut_pins_in[2*i+1];
+    end
+    dut_pins_tri = 16'hAAAA;
+  end
+//   assign dut_pins_out = {15'b0, periph_outs[0]};
+//   assign periph_ins[0] = dut_pins_in[1];
+//   assign dut_pins_tri = 16'hFFFE;
   // assign dut_pins_out = 16'b0;
   // assign dut_pins_tri = 16'hFFFF;
 
