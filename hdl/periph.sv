@@ -151,13 +151,13 @@ module periph #(
           .in(dut_pins),
           .out(out), //not used
           .tristate(tristate), //not used
-          .tx_data('0), 
-          .tx_empty(tx_fifo_empty), //not used
-          .tx_rden(tx_fifo_rden), //not used
+          .tx_data(tx_fifo_dout[usb_packet_width-periph_address_width-1:0]), 
+          .tx_empty(tx_fifo_empty),
+          .tx_rden(tx_fifo_rden),
           .rx_data(rx_fifo_din),
           .rx_wren(rx_fifo_wren),
-          .rx_full(rx_fifo_full), //not used
-          .idle(idle)//not used
+          .rx_full(rx_fifo_full),
+          .idle(idle)
 
         );
         end
