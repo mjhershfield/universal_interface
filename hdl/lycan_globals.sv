@@ -11,8 +11,7 @@ package lycan_globals;
   localparam int periph_address_width = $clog2(num_peripherals);
 
   typedef enum logic [2:0] {
-    PERIPH_LOOPBACK = 'd0,
-    PERIPH_UART = 'd1,
-    PERIPH_GPIO = 'd2
+    PERIPH_LOOPBACK,
+    PERIPH_UART
   } periph_type_t;
 endpackage
