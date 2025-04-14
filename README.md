@@ -22,18 +22,26 @@ Matthew Hershfield, Adam Bracci, Gilon Kravatsky, Matthew Self, Andres Muskus
 
 
 ## Current Bugs
-Opening GUI while FIFO full
+### Opening GUI while FIFO full
+
 Sometimes opening the GUI after the device has been running, specifically with the GPIO peripheral, which can quickly fill the FIFO, can cause the GUI to hang and not fully open
+
 Current Fix: Press the reset button and re-open the GUI. If the GUI does not open, disconnect and reconnect the USB to the host PC and try again.
+
 Frequency: Generally not frequent, since 4/13 (Added GPIO enable register)
 
-FTDI Function Hang Bug
+### FTDI Function Hang Bug
+
 On startup, during a FTDI read or write function call, the chip may get stuck. The origin of this is unknown, and there is no way to debug the function call (locked behind a DLL).
+
 Current Fix: Press the reset button and re-open the GUI. If the GUI does not open, disconnect and reconnect the USB to the host PC and try again.
+
 Frequency: Not frequent, but can often occur if board is not initially reset after programming a new bitstream
 
-Random Windows & FTDI-related Connection Bugs
+### Random Windows & FTDI-related Connection Bugs
+
 On startup of the GUI, sometimes the FTDI device is not detected. This is a problem with the way some computers connect/disconnect to USB devices.
+
 Fix: Unplug and plug in the USB cable on the computer side, and try again
 
 
