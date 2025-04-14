@@ -250,3 +250,33 @@
 - Matthew S: Work on GPIO peripheral software (graph) and more Python OOP (2 hr)
 - All: Work on Preliminary Report & Release Candidate Report (3 hr)
 - Gilon and Adam: Debug integration of GPIO periph (2.5 hr)
+
+## 3/28
+- Matthew S and Gilon: Work on demo (2 hr)
+- Matthew S: Work on demo video (2 hr)
+
+## 4/1
+- Matthew S, Gilon, Adam: Discuss project status and Work on Three Byte Problem (2 hrs)
+
+## 4/3
+- All: Work on SPI, software, config registers, and integration (2 hrs)
+
+## 4/8
+- All: Meet for stakeholder meeting (30 min)
+- Matthew H, Gilon, Adam, Andres: Work on hardware integration (1 hr)
+
+## 4/9
+- Matthew S, Matthew H, Gilon: Work on integration, config, and SPI (2 hrs)
+
+## 4/10
+- All: Continue working on SPI and Config, and presentation (3 hrs)
+
+## 4/11
+- All: Work on SPI and Config (2 hr)
+- Matthew S and Adam: Work on Config registers and software (3 hrs)
+
+## 4/12
+- Matthew S: Work on software and packaging for production release (2 hrs)
+
+## 4/13
+- Matthew S and Matthew H: Work on hardware integration of GPIO, UART, and Config (5 hrs)
