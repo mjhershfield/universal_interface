@@ -1,23 +1,27 @@
 # Software Setup Information
 ## Option 1: .EXE - Preferred (Windows only - currently)
-Simply download the gui.exe or lycan_loopback.exe file from the software/dist or software/dist/lycan_loopback directory.
+Simply download the gui.exe from the software/python/dist directory.
 Click the .exe file to execute, and you are all set!
 > [!Note]
-> Make sure the Lycan system (through the FTDI board) is plugged in before you run the programs
+> Make sure the Lycan system (through the FTDI board) is plugged in before you run the program
 
 ## Option 2: Create a Python virtual environment (Windows or Linux)
+
+> [!NOTE]
+> The Lycan API currently requires &ge;Python 3.8, but Python &ge;3.13 is preferred
+> For older Python distributions (ie. &le;3.13), use "python" instead of "py" in the following commands
 
 > [!NOTE]  
 > Don't use the Github repo for your virtual environment location
 
 ### On Windows:
 ```
-python -m venv C:/path/to/new/virtual/environment
+py -m venv C:/path/to/new/virtual/environment
 ```
 
 ### On Linux:
 ```
-python -m venv /path/to/new/virtual/environment
+py -m venv /path/to/new/virtual/environment
 ```
 
 ## Activate the VENV
@@ -53,6 +57,3 @@ python3 -m pip install -r requirements.txt
 ```
 deactivate
 ```
-
-# Lycan Testing Scripts
-## Loopback
