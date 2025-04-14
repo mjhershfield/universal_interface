@@ -1,6 +1,6 @@
 # Software Setup Information
 ## Option 1: .EXE - Preferred (Windows only - currently)
-Simply download the gui.exe from the software/python/dist directory.
+Simply download the gui.exe from the latest Release.
 Click the .exe file to execute, and you are all set!
 > [!Note]
 > Make sure the Lycan system (through the FTDI board) is plugged in before you run the program
