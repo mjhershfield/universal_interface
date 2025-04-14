@@ -3,25 +3,20 @@
 Team Members:
 Matthew Hershfield, Adam Bracci, Gilon Kravatsky, Matthew Self, Andres Muskus
 
-## Current Status (Completed so far)
-Key:
-- Hardware (H) - Verilog code complete and tested in simulation
-- Software (S) - Python code complete (in the GUI.py program)
-- Integrated (I) - Hardware code integrated with other peripherals and modules
-- Tested (T) - Software and hardware tested and working well
-
+## Current Status
+  
 ### Peripherals
-- UART (HSIT)
-- GPIO (HSIT)
-- Loopback (HSIT)
-- SPI Master (HS)
-- SPI Student (HS)
+- UART
+- GPIO
+- Loopback
+- SPI Master (Integration Testing In-Progress)
+- SPI Student (Integration Testing In-Progress)
 
 ### Other Features
-- Configuration Registers (HSIT)
+- Configuration Registers
   - Configurable stop bits, parity, and baud rate for UART
   - Configurable sample rate and enable register for GPIO
-- Lycan Logic-Level-Conversion Board (HIT)
+- Lycan Logic-Level-Conversion Board
   - 3.3V to 5V logic levels, with on-board 5V reference
   - If peripheral logic level is not 3.3V or 5V, external reference can be provided
 
