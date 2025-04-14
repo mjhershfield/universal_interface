@@ -91,7 +91,7 @@ module lycan (
         dut_pins_out[2*i] = periph_outs[i*outputs_per_peripheral];
         periph_ins[i*inputs_per_peripheral] = dut_pins_in[2*i+1];
     end
-    dut_pins_tri = 16'hAAAA;
+    dut_pins_tri = 16'hAAAB;
   end
 //   assign dut_pins_out = {15'b0, periph_outs[0]};
 //   assign periph_ins[0] = dut_pins_in[1];
