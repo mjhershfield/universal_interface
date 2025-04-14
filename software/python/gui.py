@@ -4,15 +4,18 @@ from PyQt6.QtCore import Qt, pyqtSignal, pyqtBoundSignal, QObject, QTimer
 from PyQt6.QtWidgets import (
     QApplication, QLabel, QWidget, QLineEdit, QFormLayout, 
     QPushButton, QHBoxLayout, QCheckBox, QComboBox, QTextEdit,
-    QTabWidget, QDialog, QDialogButtonBox, QVBoxLayout
+    QTabWidget, QDialog, QDialogButtonBox, QVBoxLayout, 
+    QSplashScreen
 )
-from PyQt6.QtGui import QIntValidator, QColor, QTextCursor
+from PyQt6.QtGui import QIntValidator, QColor, QTextCursor, QPixmap
 import lycan
 import PyD3XX
 from random import randint
 import threading, time
+from threading import Lock
 import pyqtgraph as pg
 import os
+import queue
 
 # Constants #
 
@@ -26,6 +29,12 @@ mutex = None
 gui = None
 
 # Helper Functions #
+
+def resource_path(relative_path):
+    # Get the absolute path to resource, works for PyInstaller 
+    if hasattr(sys, '_MEIPASS'):
+        return os.path.join(sys._MEIPASS, relative_path)
+    return os.path.join(os.path.abspath("."), relative_path)
 
 # Method to check the chip's config for notifications and to set the callback function
 # Note: This should be run in a thread with a timeout, to avoid hanging function calls
@@ -93,13 +102,16 @@ def parse_input(inStr, format):
    
 # Peripheral Config Register Dialog Class #
 class ConfigForm(QDialog):
-    def __init__(self, parent=None, registerVals={0: 0xFFFF}):
+    def __init__(self, parent, registerNames, registerVals):
         super().__init__(parent)
         self.setWindowTitle("Enter Information")
+        self.registerNames=registerNames
         self.registerVals=registerVals
 
-        self.addr_field = QLineEdit(str(list(registerVals.keys())[0]))
-        self.value_field = QLineEdit(str(list(registerVals.values())[0]))
+        self.addr_field = QComboBox()
+        self.addr_field.addItems(self.registerNames)
+        self.addr_field.currentIndexChanged.connect(self.handleAddrChange)
+        self.value_field = QLineEdit(str(self.registerVals[0]))
 
         form_layout = QFormLayout()
         form_layout.addRow('Register Address:', self.addr_field)
@@ -108,16 +120,21 @@ class ConfigForm(QDialog):
         saveButton = QPushButton('Save')
         buttonBox = QDialogButtonBox()
         buttonBox.addButton(saveButton, QDialogButtonBox.ButtonRole.AcceptRole)
+        buttonBox.accepted.connect(self.accept)
 
         main_layout = QVBoxLayout()
         main_layout.addLayout(form_layout)
         main_layout.addWidget(buttonBox)
 
         self.setLayout(main_layout)
+
+    def handleAddrChange(self, index):
+        # Change the value in the 'Register Value' box
+        self.value_field.setText(str(self.registerVals[index]))
     
     # Returns the inputs as integers (address field and value field)
     def get_inputs(self):
-        return (int(self.addr_field.text()), int(self.value_field.text()))
+        return (int(self.addr_field.currentIndex()), int(self.value_field.text()))
 
 # Peripheral Tab Parent Class - Inherited by each specific Peripheral type #
 class PeripheralTab(QWidget):
@@ -130,8 +147,9 @@ class PeripheralTab(QWidget):
         self.pIndex = peripheralIndex
         self.logFile = None
         self.logging = False
+        self.registerNames = ['Peripheral Type','1','2','3','4','5','6','7']
+        self.registerVals = [-1, -1, -1, -1, -1, -1, -1, -1]
         self.initBaseComponents() # Initialize the basic components common to all peripheral tabs
-        self.configRegisters = {} # Create empty registers dictionary
 
     # Component Setup
     def initBaseComponents(self): 
@@ -180,19 +198,23 @@ class PeripheralTab(QWidget):
         thread.start()
         thread.join(timeout=3)
 
+        # Read the config registers again
+        for p in range(8):
+            for reg in range(8):
+                gui.config_to_FIFO(p, False, reg, 0)
+
     def openConfigDialog(self):
-        for i in range(8):
-            self.gui.config_to_FIFO(self.pIndex, False, i, 0) # Send command to get the register values
-        time.sleep(3)
-        form = ConfigForm(self)
+        form = ConfigForm(self, self.registerNames, self.registerVals)
         result = form.exec() # Shows the dialog and waits for user interaction
-        if result == QDialog.accepted:
+        print(f'Form closed with result {result}')
+        if result == 1:
             addr, val = form.get_inputs()
-            if(self.configRegisters[addr] != val): # If new value, send it to Lycan
-                self.gui.config_to_FIFO(self.pIndex, True, addr, val)
+            if(self.registerVals[addr] != val): # If new value, send it to Lycan
+                self.gui.config_to_FIFO(self.pIndex, True, addr, val) # Send a Write packet
+                self.gui.config_to_FIFO(self.pIndex, False, addr, 0) # Send a Read packet to ensure register changed
 
     def storeRegValue(self, addr, val):
-        self.configRegisters[addr] = val
+        self.registerVals[addr] = val
 
     # Must override in specific peripheral class
     def createLogFile(self):
@@ -208,6 +230,195 @@ class PeripheralTab(QWidget):
 
 # Loopback Peripheral Tab Class #
 class LoopbackTab(PeripheralTab):
+
+    # Constructor
+    def __init__(self, parent, peripheralIndex):
+        super().__init__(parent, peripheralIndex)
+        self.initComponents()
+
+    # Component Setup
+    def initComponents(self):
+
+        self.rxDataLabel = QTextEdit()
+        self.rxDataLabel.setReadOnly(True)
+
+        self.txDataField = QLineEdit()
+        self.txDataField.returnPressed.connect(self.onSubmitTX)
+        self.txTypeCombo = QComboBox()
+        self.txTypeCombo.addItems(['Str', 'Hex', 'Bin', 'Dec'])
+        self.txSubmitButton = QPushButton('Send')
+        self.txSubmitButton.clicked.connect(self.onSubmitTX)
+
+        # Layout Setup #
+
+        self.txRowLayout = QHBoxLayout()
+        self.txRowLayout.addWidget(self.txDataField)
+        self.txRowLayout.addWidget(self.txTypeCombo)
+        self.txRowLayout.addWidget(self.txSubmitButton)
+
+        layout = QFormLayout()
+        layout.addRow(self.headerRowLayout)
+        layout.addRow('RX Data:', self.rxDataLabel)
+        layout.addRow('TX Data:', self.txRowLayout)
+        layout.addRow('Errors:', self.errorLabel)
+        layout.setVerticalSpacing(10)
+        self.setLayout(layout)
+
+    # On request to send to FIFO
+    def onSubmitTX(self):
+        # Create a writing thread and start it
+        print('Writing')
+        write_t = threading.Thread(target=self.gui.write_to_FIFO, args=(self.pIndex, self.txDataField.text(), self.txTypeCombo.currentText(),))
+        write_t.start()
+
+    # On received data
+    def displayData(self, data):
+        print('Displaying text')
+        if(self.txTypeCombo.currentText() == 'Hex'):
+            self.rxDataLabel.insertPlainText("\n" + str(data.hex()))
+        elif(self.txTypeCombo.currentText() == 'Dec'):
+            self.rxDataLabel.insertPlainText("\n" + str(int.from_bytes(data, 'little')))
+        elif(self.txTypeCombo.currentText() == 'Bin'):
+            self.rxDataLabel.insertPlainText("\n" + str(bin(int.from_bytes(data, 'little'))))
+        else:
+            try:
+                self.rxDataLabel.insertPlainText(data.decode())
+            except:
+                self.rxDataLabel.insertPlainText(str(data))
+        self.logData(data, True)
+
+    def createLogFile(self):
+        if(not self.logging):
+            try:
+                self.logFile = open(f'p_{self.pIndex}_log_{str(int(time.time()))}.txt', 'w')
+                self.logging = True
+                self.logButton.setStyleSheet('background-color: red;')
+                self.logButton.setText('Stop Logging to File')
+            except Exception as e:
+                print(e)
+                self.errorLabel.setText('Error creating the log file!')
+        else:
+            # Close the log file (and save it)
+            try:
+                self.rxDataLabel.append('Log data saved to file: ' + self.logFile.name + '\n')
+                self.logFile.close()
+                self.logging = False
+                self.logButton.setStyleSheet('background-color: green;')
+                self.logButton.setText('Start Logging to File')
+            except Exception as e:
+                print(e)
+                self.errorLabel.setText('Error saving/closing the log file!')
+
+    def logData(self, data, isRX):
+        timestamp = str(time.time())
+        if(self.logging):
+            try:
+                if(isRX):
+                    try:
+                        self.logFile.write(f'{timestamp}:\t{bytes(data)}\n')
+                    except:
+                        print('Error logging to file!')
+            except Exception as e:
+                print(e)
+                self.errorLabel.setText('Error writing to log file!')
+
+# UART Peripheral Tab Class #
+class UARTTab(PeripheralTab):
+
+    # Constructor
+    def __init__(self, parent, peripheralIndex):
+        super().__init__(parent, peripheralIndex)
+        self.registerNames = ['Peripheral Type', 'Data Bits', 'Stop Bits', 'Parity', 'Baud Rate Div', '5', '6', '7']
+        self.initComponents()
+
+    # Component Setup
+    def initComponents(self):
+
+        self.rxDataLabel = QTextEdit()
+        self.rxDataLabel.setReadOnly(True)
+
+        self.txDataField = QLineEdit()
+        self.txDataField.returnPressed.connect(self.onSubmitTX)
+        self.txTypeCombo = QComboBox()
+        self.txTypeCombo.addItems(['Str', 'Hex', 'Bin', 'Dec'])
+        self.txSubmitButton = QPushButton('Send')
+        self.txSubmitButton.clicked.connect(self.onSubmitTX)
+
+        # Layout Setup #
+
+        self.txRowLayout = QHBoxLayout()
+        self.txRowLayout.addWidget(self.txDataField)
+        self.txRowLayout.addWidget(self.txTypeCombo)
+        self.txRowLayout.addWidget(self.txSubmitButton)
+
+        layout = QFormLayout()
+        layout.addRow(self.headerRowLayout)
+        layout.addRow('RX Data:', self.rxDataLabel)
+        layout.addRow('TX Data:', self.txRowLayout)
+        layout.addRow('Errors:', self.errorLabel)
+        layout.setVerticalSpacing(10)
+        self.setLayout(layout)
+
+    # On request to send to FIFO
+    def onSubmitTX(self):
+        # Create a writing thread and start it
+        write_t = threading.Thread(target=self.gui.write_to_FIFO, args=(self.pIndex, self.txDataField.text(), self.txTypeCombo.currentText(),))
+        write_t.start()
+
+    # On received data
+    def displayData(self, data):
+        print('Displaying text')
+        if(self.txTypeCombo.currentText() == 'Hex'):
+            self.rxDataLabel.insertPlainText("\n" + str(data.hex()))
+        elif(self.txTypeCombo.currentText() == 'Dec'):
+            self.rxDataLabel.insertPlainText("\n" + str(int.from_bytes(data, 'little')))
+        elif(self.txTypeCombo.currentText() == 'Bin'):
+            self.rxDataLabel.insertPlainText("\n" + str(bin(int.from_bytes(data, 'little'))))
+        else:
+            try:
+                self.rxDataLabel.insertPlainText(data.decode())
+            except:
+                self.rxDataLabel.insertPlainText(str(data))
+        self.logData(data, True)
+        self.rxDataLabel.moveCursor(QTextCursor.MoveOperation.End)
+
+    def createLogFile(self):
+        if(not self.logging):
+            try:
+                self.logFile = open(f'p_{self.pIndex}_log_{str(int(time.time()))}.txt', 'w')
+                self.logging = True
+                self.logButton.setStyleSheet('background-color: red;')
+                self.logButton.setText('Stop Logging to File')
+            except Exception as e:
+                print(e)
+                self.errorLabel.setText('Error creating the log file!')
+        else:
+            # Close the log file (and save it)
+            try:
+                self.rxDataLabel.append('Log data saved to file: ' + self.logFile.name + '\n')
+                self.logFile.close()
+                self.logging = False
+                self.logButton.setStyleSheet('background-color: green;')
+                self.logButton.setText('Start Logging to File')
+            except Exception as e:
+                print(e)
+                self.errorLabel.setText('Error saving/closing the log file!')
+
+    def logData(self, data, isRX):
+        timestamp = str(time.time())
+        if(self.logging):
+            try:
+                if(isRX):
+                    try:
+                        self.logFile.write(f'{timestamp}:\t{bytes(data)}\n')
+                    except:
+                        print('Error logging to file!')
+            except Exception as e:
+                print(e)
+                self.errorLabel.setText('Error writing to log file!')
+
+# SPI-Master Tab Class #
+class SPIMasterTab(PeripheralTab):
 
     # Constructor
     def __init__(self, parent, peripheralIndex):
@@ -299,8 +510,8 @@ class LoopbackTab(PeripheralTab):
                 print(e)
                 self.errorLabel.setText('Error writing to log file!')
 
-# UART Peripheral Tab Class #
-class UARTTab(PeripheralTab):
+# SPI-Student Tab Class #
+class SPIStudentTab(PeripheralTab):
 
     # Constructor
     def __init__(self, parent, peripheralIndex):
@@ -398,6 +609,7 @@ class GPIOTab(PeripheralTab):
     # Constructor
     def __init__(self, parent, peripheralIndex):
         super().__init__(parent, peripheralIndex)
+        self.registerNames = ['Peripheral Type', 'Enable', 'Sample Rate Div', '3', '4', '5', '6', '7']
         self.initComponents()
 
     # Component Setup
@@ -417,13 +629,29 @@ class GPIOTab(PeripheralTab):
             if(i > 1):
                 self.gpio_lines[i].setVisible(False)
 
+        self.playing = False
+        self.playButton = QPushButton('Start/Stop')
+        self.playButton.clicked.connect(self.handlePlay)
+
         # Layout Setup #
         mainLayout = QFormLayout()
         mainLayout.addRow(self.headerRowLayout)
+        mainLayout.addRow(self.playButton)
         mainLayout.addRow(self.graphWidget)
         mainLayout.addRow('Errors:', self.errorLabel)
         mainLayout.setVerticalSpacing(10)
         self.setLayout(mainLayout)
+
+    def handlePlay(self):
+        # Send a config packet to Lycan, enabling the GPIO to start receiving
+        if(not self.playing):
+            self.gui.config_to_FIFO(self.pIndex, True, 1, 1) # Set reg value to 1
+            self.gui.config_to_FIFO(self.pIndex, False, 1, 0) # Read back the reg value
+        else:
+            self.gui.config_to_FIFO(self.pIndex, True, 1, 0) # Set reg value to 0
+            self.gui.config_to_FIFO(self.pIndex, False, 1, 0) # Read back the reg value
+        self.playing = not self.playing
+        
 
     def displayData(self, data):
         dataInt = int.from_bytes(data, byteorder='little')
@@ -431,6 +659,8 @@ class GPIOTab(PeripheralTab):
             self.dataArrs[i] = self.dataArrs[i][1:]
             self.dataArrs[i].append((dataInt & (1 << i)) >> i)
             self.gpio_lines[i].setData(self.timeArr, self.dataArrs[i])
+            if(i == 0):
+                print(hex(dataInt))
         self.logData(data, True)
         pass
 
@@ -472,11 +702,14 @@ class GPIOTab(PeripheralTab):
 class LycanWindow(QTabWidget):
 
     # Dictonary holding the types of peripherals and the value of their 0 register
-    PERIPHERAL_TYPES = {0: LoopbackTab, 1: UARTTab, 2: GPIOTab}
+    PERIPHERAL_TYPES = {0: (LoopbackTab, 'Loopback'), 1: (UARTTab, 'UART'), 2: (GPIOTab, 'GPIO'), 3: (SPIMasterTab, 'SPI Master')}
 
     rx_update_signal = pyqtSignal(int, bytearray)
-    config_update_signal = pyqtSignal(int, int, int) # Unspecified parameter types (maybe change later?)
+    config_update_signal = pyqtSignal(int, bytearray)
     error_update_signal = pyqtSignal(int, str)
+
+    configReadQueues = [queue.Queue]*8
+    configQueueLocks = [Lock]*8
 
     # Constructor
     def __init__(self, numPeripherals):
@@ -491,13 +724,13 @@ class LycanWindow(QTabWidget):
 
         # Tab Setup #
         self.peripheralTabs = [PeripheralTab]*numPeripherals
-        # self.peripheralTabs[0] = GPIOTab(self, 0)
-        # self.addTab(self.peripheralTabs[0], f'Peripheral {0}')
-        # print(f'Added Periph Tab #{0}')
         for i in range(0, numPeripherals):
-            self.peripheralTabs[i] = UARTTab(self, i)
-            self.addTab(self.peripheralTabs[i], f'{i}: UART')
-            print(f'Added Periph Tab #{i}')
+            self.peripheralTabs[i] = GPIOTab(self, i)
+            self.addTab(self.peripheralTabs[i], f'{i}: GPIO')
+            print(f'Added Periph Tab #{i} of type {type(self.peripheralTabs[i]).__name__}')
+            # Set up the config read queues, to keep track of what read config packets have been sent
+            self.configReadQueues[i] = queue.Queue()
+            self.configQueueLocks[i] = Lock()
 
     def write_to_FIFO(self, periphAddr, data, format='Hex'):
         try:
@@ -546,9 +779,10 @@ class LycanWindow(QTabWidget):
             for i in range(len(isConfig_arr)):
                 if(len(data_arr[i]) > 0):
                     if(isConfig_arr[i]):
-                        self.config_update_signal.emit(pId_arr[i], data_arr[0], data_arr[1:3])
+                        self.config_update_signal.emit(pId_arr[i], data_arr[i])
                     else:
                         self.rx_update_signal.emit(pId_arr[i], data_arr[i])
+                        self.error_update_signal.emit(pId_arr[i], '')
         except Exception as e:
             self.error_update_signal.emit(pId_arr[i], f'Error with processing read packet(s): {e}')
     
@@ -580,30 +814,25 @@ class LycanWindow(QTabWidget):
     def displayError(self, pIndex, errorStr):
         self.peripheralTabs[pIndex].errorLabel.setText(errorStr)
 
-    # Method called when a configuration packet is received (configUpdate signal is emitted)
-    def handleConfig(self, pIndex, addr, val):
-        if(addr == 0):
+    # Method called when a configuration packet is received from Lycan (configUpdate signal is emitted)
+    def handleConfig(self, pIndex, data_bytes):
+        # Convert the data bytes to an integer
+        addr = data_bytes[0]
+        valB = data_bytes[1:4]
+        val = int.from_bytes(valB, byteorder='little')
+        # DEBUG print
+        print('Received config packet: ', f'pId: {pIndex}', f'Address: {addr}', f'Value: {val}')
+        if(addr == 0 and 0 <= val <= 2):
             # Check if the type of the peripheral has changed
-            if(self.PERIPHERAL_TYPES[val] == type(self.peripheralTabs[pIndex])):
-                print('Changing peripheral tab type...')
+            if(self.PERIPHERAL_TYPES[val][0] != type(self.peripheralTabs[pIndex])):
+                print(f'Changing peripheral tab type from {type(self.peripheralTabs[pIndex])} to {self.PERIPHERAL_TYPES[val][0]}')
                 self.removeTab(pIndex) # Remove the current tab
-                if(val == self.PERIPHERAL_TYPES[0]): # Loopback peripheral
-                    self.peripheralTabs[pIndex] = LoopbackTab(self, pIndex) # Create the new tab
-                    self.insertTab(pIndex, self.peripheralTabs[pIndex], label=f'{pIndex}: Loopback') # Insert the new tab
-                elif(val == self.PERIPHERAL_TYPES[1]): # UART peripheral
-                    self.peripheralTabs[pIndex] = UARTTab(self, pIndex) # Create the new tab
-                    self.insertTab(pIndex, self.peripheralTabs[pIndex], label=f'{pIndex}: UART') # Insert the new tab
-                elif(val == self.PERIPHERAL_TYPES[2]): # GPIO peripheral
-                    self.peripheralTabs[pIndex] = GPIOTab(self, pIndex) # Create the new tab
-                    self.insertTab(pIndex, self.peripheralTabs[pIndex], label=f'{pIndex}: GPIO') # Insert the new tab
-                else:
-                    self.peripheralTabs[pIndex] = LoopbackTab(self, pIndex) # Create the new tab (default)
-                    self.insertTab(pIndex, self.peripheralTabs[pIndex], label=f'{pIndex}: Loopback') # Insert the new tab
+                self.peripheralTabs[pIndex] = self.PERIPHERAL_TYPES[val][0](self, pIndex) # Create the new tab
+                self.insertTab(pIndex, self.peripheralTabs[pIndex], f'{pIndex}: {self.PERIPHERAL_TYPES[val][1]}') # Insert the new tab
             else:
                 print('Config handled, but no valid change to peripheral type.')
-        else:
+        if(0 <= addr <= 7):
             self.peripheralTabs[pIndex].storeRegValue(addr, val)
-            print('Config:', addr, val)
 
     def closeEvent(self, event):
         # Start a thread that runs the close function for the Lycan device
@@ -619,6 +848,13 @@ if __name__ == '__main__':
     mutex = threading.Lock()
 
     app = QApplication(sys.argv)
+
+    # Create and open a "Splashcreen" while loading
+    splashImage = QPixmap(resource_path("splash_image.png"))  # Replace with your image file
+    splash = QSplashScreen(splashImage, Qt.WindowType.WindowStaysOnTopHint)
+    splash.show()
+    app.processEvents()
+
     gui = LycanWindow(8)
 
     # Instantiate Lycan device
@@ -654,11 +890,12 @@ if __name__ == '__main__':
     else:
         print('Callback set successfully!')
 
-    # Check the peripherals used by Lycan
-    # for i in range(8):
-    #     gui.config_to_FIFO(i, False, 0, 0)
-    
-    time.sleep(3)
+    # Read the peripheral config registers
+    for p in range(8):
+        for reg in range(8):
+            gui.config_to_FIFO(p, False, reg, 0)
+
+    splash.close() # Close the splashscreen
         
     gui.show() # Show the GUI
 

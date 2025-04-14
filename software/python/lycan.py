@@ -1,4 +1,5 @@
 import PyD3XX
+from sys import platform as Platform
 
 
 class Lycan():
@@ -51,6 +52,7 @@ class Lycan():
         elif(numBytesRead != length):
             raise Exception(f'Error with reading. Tried to read {length} bytes, but only read {numBytesRead}.')
         readVal = readBuff.Value()
+        # print(readVal)
         return numBytesRead, readVal
     
     def read_packet(self):
@@ -79,16 +81,13 @@ class Lycan():
             periphAddr = (raw[3] & 0b11100000) >> 5
             periphAddr_arr += [periphAddr]
             if(is_config):
-                config_write = (raw[3] & 0b00001000) >> 3
-                if(not config_write):
-                    print('Received Config Packet...')
-                    addr = (raw[3] & 0b00000111) # Address
-                    val = raw[0:3]
-                    data_arr += [addr.to_bytes(1, 'little') + val]
-                else:
-                    print('Ignoring Config \'Write\' Packet')
+                regAddr = (raw[3] & 0b00000111) >> 0
+                dataB = bytearray(int.to_bytes(regAddr, length=1, byteorder='little') + raw[0:3])
+                # print(hex(int.from_bytes(raw[0:4], byteorder='little')))
+                data_arr += [dataB]
             else:
-                data_arr += [raw[0:3]]
+                numValidBytes = (raw[3] & 0b00001100) >> 2
+                data_arr += [raw[0:numValidBytes]]
             # Move on to next packet
             raw = raw[4:]
         return is_config_arr, periphAddr_arr, data_arr
@@ -128,7 +127,6 @@ class Lycan():
         numBytesWritten = 0
         while(len(data) > 0):
             packet = self.construct_data_packet(peripheral_addr, data[0:3])
-            print('Packet to be transmitted: ', packet)
             numBytesWritten += self.write_raw_bytes(raw=packet)
             data = data[3:]
         return numBytesWritten
@@ -144,13 +142,12 @@ class Lycan():
         if(reg_val < 0 or reg_val > 16777215):
             raise Exception('Error: Invalid register value (max of 24 bits)')
         # Construct the packet
-        packet = peripheral_addr << 32 - 3 # address
-        packet += 1 << 29 - 1 # config flag bit
-        packet += write << 28 - 1 # read/write bit
-        packet += reg_addr << 27 - 2
+        packet = peripheral_addr << (32 - 3) # address
+        packet += 1 << (32 - 4) # config flag bit
+        packet += write << (32 - 5) # read/write bit
+        packet += reg_addr << (32 - 8)
         packet += reg_val
         # Transmit the packet
-        print('Packet to be transmitted: ', packet.to_bytes(4, 'little'))
         numBytesTransferred = self.write_raw_bytes(packet.to_bytes(4, 'little'))
         return numBytesTransferred
 
