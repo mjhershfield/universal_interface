@@ -207,19 +207,25 @@
 - All: Meet to discuss and test UART receive (2 hr)
 - Matthew S: Continue testing LLC board, work on UART software (1 hr)
 
+## 3/3
+- Gilon: continue work to integrate GPIO periph (1 hr)
+
 ## 3/4
 - All: Meet to work on UART RX (2 hr)
+- Gilon and Adam: Debug integration of GPIO periph (2.5 hr)
 
 ## 3/5
 - Matthew S: Work on UART software & testing (2 hr)
 - Gilon: Work on UART RX (2 hr)
 - Adam: Work on UART RX (2 hr)
 - Andres: Work on presentation (2 hr)
+- Gilon and Adam: Debug integration of periphs (7.5 hr)
 
 ## 3/6
 - Matthew S and Andres: Finish presentation (2 hr)
 - Matthew S: Work on UART testing and Arduino code for demo (1 hr)
 - Gilon and Adam: Work on UART RX (2 hr)
+- All: Debug integration of periphs and prep for beta presentation (3 hr)
 
 ## 3/7
 - Gilon, Matthew H, Adam: Work on UART RX (2 hr)
@@ -243,3 +249,34 @@
 - Matthew S and Gilon: Work on GPIO peripheral & testing (2 hr)
 - Matthew S: Work on GPIO peripheral software (graph) and more Python OOP (2 hr)
 - All: Work on Preliminary Report & Release Candidate Report (3 hr)
+- Gilon and Adam: Debug integration of GPIO periph (2.5 hr)
+
+## 3/28
+- Matthew S and Gilon: Work on demo (2 hr)
+- Matthew S: Work on demo video (2 hr)
+
+## 4/1
+- Matthew S, Gilon, Adam: Discuss project status and Work on Three Byte Problem (2 hrs)
+
+## 4/3
+- All: Work on SPI, software, config registers, and integration (2 hrs)
+
+## 4/8
+- All: Meet for stakeholder meeting (30 min)
+- Matthew H, Gilon, Adam, Andres: Work on hardware integration (1 hr)
+
+## 4/9
+- Matthew S, Matthew H, Gilon: Work on integration, config, and SPI (2 hrs)
+
+## 4/10
+- All: Continue working on SPI and Config, and presentation (3 hrs)
+
+## 4/11
+- All: Work on SPI and Config (2 hr)
+- Matthew S and Adam: Work on Config registers and software (3 hrs)
+
+## 4/12
+- Matthew S: Work on software and packaging for production release (2 hrs)
+
+## 4/13
+- Matthew S and Matthew H: Work on hardware integration of GPIO, UART, and Config (5 hrs)

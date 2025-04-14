@@ -8,13 +8,13 @@ module lycan (
     // FTDI FT601 control signals
     inout logic [31:0] usb_data,
     inout logic [3:0] usb_be,
-    (* mark_debug = "true" *) input logic usb_tx_full,  // 0 = space available, 1 = full
-    (* mark_debug = "true" *) input logic usb_rx_empty,  // 0 = data available, 1 = empty
+    input logic usb_tx_full,  // 0 = space available, 1 = full
+    input logic usb_rx_empty,  // 0 = data available, 1 = empty
     input logic usb_siwu,  // TODO: constant pullup. can this be done in constraints?
-    (* mark_debug = "true" *) output logic usb_wren_l,
-    (* mark_debug = "true" *) output logic usb_rden_l,
-    (* mark_debug = "true" *) output logic usb_outen_l,
-    (* mark_debug = "true" *) output logic usb_rst_l,
+    output logic usb_wren_l,
+    output logic usb_rden_l,
+    output logic usb_outen_l,
+    output logic usb_rst_l,
     input logic usb_wakeup,  // bidirectional. as input, 0 = USB active, 1 = usb suspended.
     // as output, Drive low to send remote wakeup
     input logic [1:0] usb_gpio,  // TWO CONFIGURABLE GPIO. WHAT DO THEY DO?
@@ -29,7 +29,7 @@ module lycan (
   // Local signals
   logic rst;
   logic read_periph_data;
-  logic [num_peripherals-1:0]
+  (* mark_debug = "true" *) logic [num_peripherals-1:0]
       periph_tx_fulls,
       periph_rx_rdens,
       periph_rx_emptys,
@@ -41,36 +41,38 @@ module lycan (
   logic [inputs_per_peripheral*num_peripherals-1:0] periph_ins;
   logic [outputs_per_peripheral*num_peripherals-1:0] periph_outs;
   logic [tristates_per_peripheral*num_peripherals-1:0] periph_tristates;
-  // (* mark_debug = "true" *) logic [usb_packet_width-1:0] periph_tx_din;
+  // logic [usb_packet_width-1:0] periph_tx_din;
   logic [2:0] periph_grant;
-  logic [num_peripherals-1:0] decoded_grant;
+  (* mark_debug = "true" *) logic [num_peripherals-1:0] decoded_grant;
   logic [usb_packet_width-1:0] arbiter_out;
-  logic arbiter_out_valid;
+  (* mark_debug = "true" *) logic arbiter_out_valid;
 
   logic [num_peripherals-1:0][usb_packet_width-1:0] mux_options;
 
   (* mark_debug = "true" *) logic [usb_packet_width-1:0] usb_data_in, usb_data_out;
   (* mark_debug = "true" *) logic usb_data_tri;
-  (* mark_debug = "true" *) logic [3:0] be_in, be_out;
-  (* mark_debug = "true" *) logic be_tri;
-  (* mark_debug = "true" *) logic lycan_rd, lycan_wr;
-  (* mark_debug = "true" *) logic [31:0] lycan_in, lycan_out;
-  (* mark_debug = "true" *) logic in_fifo_empty, in_fifo_full, out_fifo_empty, out_fifo_full;
+  logic [3:0] be_in, be_out;
+  logic be_tri;
+  logic lycan_rd, lycan_wr;
+  logic [31:0] lycan_in, lycan_out;
+  logic in_fifo_empty, in_fifo_full, out_fifo_empty, out_fifo_full;
+
+  (* mark_debug = "true" *)logic wr_rst_busy, rd_rst_busy; 
 
   // 0 = output, 1 = input
-  logic [num_dut_pins-1:0] dut_pins_in;
-  logic [num_dut_pins-1:0] dut_pins_out;
-  logic [num_dut_pins-1:0] dut_pins_tri;
+  (* mark_debug = "true" *)logic [num_dut_pins-1:0] dut_pins_in;
+   logic [num_dut_pins-1:0] dut_pins_out;
+   logic [num_dut_pins-1:0] dut_pins_tri;
+   // Peripheral 0 is not configurable, it's hard-coded to be GPIO
   localparam periph_type_t periph_list[8] = {
+    PERIPH_GPIO,
     PERIPH_UART,
-    // PERIPH_LOOPBACK,
-    PERIPH_LOOPBACK,
-    PERIPH_LOOPBACK,
-    PERIPH_LOOPBACK,
-    PERIPH_LOOPBACK,
-    PERIPH_LOOPBACK,
-    PERIPH_LOOPBACK,
-    PERIPH_LOOPBACK
+    PERIPH_UART,
+    PERIPH_UART,
+    PERIPH_UART,
+    PERIPH_UART,
+    PERIPH_UART,
+    PERIPH_UART
   };
 
   // Set voltage regulator for 2.5V
@@ -84,9 +86,16 @@ module lycan (
 
   // Hard code dut pin outputs to 0 = UART TX, 1 = UART RX
   // 0 = output, 1 = input
-  assign dut_pins_out = {15'b0, periph_outs[0]};
-  assign periph_ins[0] = dut_pins_in[1];
-  assign dut_pins_tri = 16'hFFFE;
+  always_comb begin
+    for (int i = 0; i < 8; i ++) begin
+        dut_pins_out[2*i] = periph_outs[i*outputs_per_peripheral];
+        periph_ins[i*inputs_per_peripheral] = dut_pins_in[2*i+1];
+    end
+    dut_pins_tri = 16'hAAAA;
+  end
+//   assign dut_pins_out = {15'b0, periph_outs[0]};
+//   assign periph_ins[0] = dut_pins_in[1];
+//   assign dut_pins_tri = 16'hFFFE;
   // assign dut_pins_out = 16'b0;
   // assign dut_pins_tri = 16'hFFFF;
 
@@ -94,9 +103,9 @@ module lycan (
   genvar dut_pin;
   for (dut_pin = 0; dut_pin < num_dut_pins; dut_pin++) begin : gen_dut_pins_iobuf
     IOBUF dut_pins_iobuf (
-        .O (dut_pins_in[dut_pin]),
+        .O (dut_pins_in[dut_pin]), //coming from DUT
         .IO(dut_pins[dut_pin]),
-        .I (dut_pins_out[dut_pin]),
+        .I (dut_pins_out[dut_pin]), //going to DUT
         .T (dut_pins_tri[dut_pin])
     );
   end
@@ -120,6 +129,7 @@ module lycan (
       .lycan_out_empty(out_fifo_empty),
       .periph_ready(&periph_readys)
   );
+
 
   // Tristate buffer for USB data bus
   genvar usb_bit;
@@ -166,9 +176,9 @@ module lycan (
       .rd_en(~usb_wren_l),    // input wire rd_en
       .dout (usb_data_out),   // output wire [31 : 0] dout
       .full (out_fifo_full),  // output wire full
-      .empty(out_fifo_empty)  // output wire empty
-      // .wr_rst_busy(wr_rst_busy),  // output wire wr_rst_busy
-      // .rd_rst_busy(rd_rst_busy)   // output wire rd_rst_busy
+      .empty(out_fifo_empty),  // output wire empty
+       .wr_rst_busy(wr_rst_busy),  // output wire wr_rst_busy
+       .rd_rst_busy(rd_rst_busy)   // output wire rd_rst_busy
   );
 
   assign lycan_out = arbiter_out;
@@ -204,40 +214,65 @@ module lycan (
       .out(arbiter_out_valid)
   );
 
-  // Instantiate 8 loopback peripherals
-  genvar periph_num;
-  for (periph_num = 0; periph_num < num_peripherals; periph_num++) begin : gen_peripherals
-    periph #(
-        .ADDRESS(3'(periph_num)),
-        .PERIPH_TYPE(periph_list[periph_num])
-    ) peripheral (
+  // Instantiate GPIO peripheral at address 0
+  periph #(
+        .ADDRESS(3'(0)),
+        .PERIPH_TYPE(periph_list[0])
+  ) gpio_periph (
         .clk(clk),
         .rst(rst),
-        .in(periph_ins[periph_num*inputs_per_peripheral+:inputs_per_peripheral]),
-        .out(periph_outs[periph_num*outputs_per_peripheral+:outputs_per_peripheral]),
-        .tristate(periph_tristates[periph_num*tristates_per_peripheral+:tristates_per_peripheral]),
+        .in(),
+        .dut_pins(dut_pins_in), //only for GPIO periph. for some reason dut pins in seems to be inverted
+        .out(),
+        .tristate(),
         .tx_data(lycan_in),
         .tx_valid(~in_fifo_empty),
-        .tx_full(periph_tx_fulls[periph_num]),
-        .rx_data(mux_options[periph_num]),
-        .rx_read(periph_rx_rdens[periph_num]),
-        .rx_empty(periph_rx_emptys[periph_num]),
-        .rx_almost_full(periph_rx_almost_fulls[periph_num]),
-        .rx_full(periph_rx_fulls[periph_num]),
-        .idle(periph_idles[periph_num]),
-        .ready(periph_readys[periph_num])
-    );
-  end
+        .tx_full(periph_tx_fulls[0]),
+        .rx_data(mux_options[0]),
+        .rx_read(periph_rx_rdens[0]),
+        .rx_empty(periph_rx_emptys[0]),
+        .rx_almost_full(periph_rx_almost_fulls[0]),
+        .rx_full(periph_rx_fulls[0]),
+        .idle(periph_idles[0]),
+        .ready(periph_readys[0])
+    );   
 
-  // Decode grant signal to periph_rdens vector
-  decoder #(
-      .WIDTH(8)
-  ) periph_rden_decoder (
-      .in(periph_grant),
-      .valid(1'b1),
-      .out(decoded_grant)
-  );
+  // Instantiate 8 loopback peripherals
+  genvar periph_num;
+  for (periph_num = 1; periph_num < num_peripherals; periph_num++) begin : gen_peripherals 
+        periph #(
+            .ADDRESS(3'(periph_num)),
+            .PERIPH_TYPE(periph_list[periph_num])
+        ) peripheral (
+            .clk(clk),
+            .rst(rst),
+            .in(periph_ins[periph_num*inputs_per_peripheral+:inputs_per_peripheral]),
+            .out(periph_outs[periph_num*outputs_per_peripheral+:outputs_per_peripheral]),
+            .tristate(periph_tristates[periph_num*tristates_per_peripheral+:tristates_per_peripheral]),
+            .dut_pins(), //leave open for non-GPIO peripherals
+            .tx_data(lycan_in),
+            .tx_valid(~in_fifo_empty),
+            .tx_full(periph_tx_fulls[periph_num]),
+            .rx_data(mux_options[periph_num]),
+            .rx_read(periph_rx_rdens[periph_num]),
+            .rx_empty(periph_rx_emptys[periph_num]),
+            .rx_almost_full(periph_rx_almost_fulls[periph_num]),
+            .rx_full(periph_rx_fulls[periph_num]),
+            .idle(periph_idles[periph_num]),
+            .ready(periph_readys[periph_num])
+        );
+end
 
-  assign periph_rx_rdens = decoded_grant & ~periph_rx_emptys;
+// Decode grant signal to periph_rdens vector
+decoder #(
+    .WIDTH(8)
+) periph_rden_decoder (
+    .in(periph_grant),
+    .valid(1'b1),
+    .out(decoded_grant)
+);
+
+
+assign periph_rx_rdens = decoded_grant & ~periph_rx_emptys;
 
 endmodule
