@@ -4,6 +4,9 @@ Matthew Hershfield, Adam Bracci, Gilon Kravatsky, Matthew Self, Andres Muskus (M
 
 Lycan aims to be a _universal interface_ for common digital protocols used in embedded devices such as UART and SPI. Lycan's flexible architecture allows up to 8 supported communication peripherals to share a single USB bus, whether that is 8 UARTs, a SPI and a JTAG, or logic analyzer functionality.
 
+Lycan owes special thanks to our stakeholder, Raven Ramos, and our instructors, Dr. Jeremiah Blanchard and Carsten Bludworth.
+
+Lycan also owes thanks to Hector Soto and FTDI for their support with the FT601 chip.
 
 ## Current Status
   
