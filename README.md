@@ -103,4 +103,5 @@ module reconfig_periph_wrapper (
 We recommend basing your peripheral on our [UART implementation](./hdl/periph/uart/uart.sv), which has additional features including configurable clock division, configuration registers, and width conversion between the 24 bits of data stored in a packet and the 8 bits that are transmitted/received at a time by the UART. Once you have implemented your peripheral, add a variant to the [periph_type_t enum](./hdl/lycan_globals.sv) and then add an instantiation of your peripheral to [periph.sv](./hdl/periph.sv) so that it can be instantiated at compile time.
 
 ## Software Info
-
+See Releases for .exe file (Windows Only)
+See the /software README file for information about setting up a Python environment
