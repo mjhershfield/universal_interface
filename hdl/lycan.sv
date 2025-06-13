@@ -93,11 +93,6 @@ module lycan (
     end
     dut_pins_tri = 16'hAAAB;
   end
-//   assign dut_pins_out = {15'b0, periph_outs[0]};
-//   assign periph_ins[0] = dut_pins_in[1];
-//   assign dut_pins_tri = 16'hFFFE;
-  // assign dut_pins_out = 16'b0;
-  // assign dut_pins_tri = 16'hFFFF;
 
   // Tristate buffer for DUT pins
   genvar dut_pin;
